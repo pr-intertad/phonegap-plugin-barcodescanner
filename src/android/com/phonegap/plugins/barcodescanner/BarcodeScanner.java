@@ -8,19 +8,21 @@
  */
 package com.phonegap.plugins.barcodescanner;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.content.Intent;
+import android.graphics.Point;
+import android.os.Build;
+import android.util.Log;
+import android.view.Display;
+
+import com.google.zxing.client.android.Intents;
+
+import org.apache.cordova.CallbackContext;
+import org.apache.cordova.CordovaPlugin;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import android.app.Activity;
-import android.content.Intent;
-import android.util.Log;
-
-import org.apache.cordova.CordovaPlugin;
-import org.apache.cordova.CallbackContext;
-import org.apache.cordova.PluginResult;
-
-import android.util.Log;
 
 /**
  * This calls out to the ZXing barcode reader and returns the result.
@@ -54,6 +56,21 @@ public class BarcodeScanner extends CordovaPlugin {
      * Constructor.
      */
     public BarcodeScanner() {
+    }
+
+    @SuppressLint("NewApi")
+    private Point getDisplaySize(Activity activity) {
+        Display display = activity.getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+
+        int currentapiVersion = android.os.Build.VERSION.SDK_INT;
+        if (currentapiVersion >= Build.VERSION_CODES.HONEYCOMB_MR2){
+            display.getSize(size);
+        } else{
+            size.set(display.getHeight(), display.getWidth());
+        }
+
+        return size;
     }
 
     /**
@@ -98,7 +115,7 @@ public class BarcodeScanner extends CordovaPlugin {
                 return true;
             }
         } else if (action.equals(SCAN)) {
-            scan(args);
+            scan();
         } else {
             return false;
         }
@@ -108,51 +125,21 @@ public class BarcodeScanner extends CordovaPlugin {
     /**
      * Starts an intent to scan and decode a barcode.
      */
-    public void scan(JSONArray args) {
+    public void scan() {
         Intent intentScan = new Intent(SCAN_INTENT);
         intentScan.addCategory(Intent.CATEGORY_DEFAULT);
-
-        // add config as intent extras
-        if(args.length() > 0) {
-
-            JSONObject obj;
-            JSONArray names;
-            String key;
-            Object value;
-
-            for(int i=0; i<args.length(); i++) {
-
-                try {
-                    obj = args.getJSONObject(i);
-                } catch(JSONException e) {
-                    Log.i("CordovaLog", e.getLocalizedMessage());
-                    continue;
-                }
-
-                names = obj.names();
-                for(int j=0; j<names.length(); j++) {
-                    try {
-                        key = names.getString(j);
-                        value = obj.get(key);
-
-                        if(value instanceof Integer) {
-                            intentScan.putExtra(key, (Integer)value);
-                        } else if(value instanceof String) {
-                            intentScan.putExtra(key, (String)value);
-                        }
-
-                    } catch(JSONException e) {
-                        Log.i("CordovaLog", e.getLocalizedMessage());
-                        continue;
-                    }
-                }
-            }
-
-        }
-
         // avoid calling other phonegap apps
-        intentScan.setPackage(this.cordova.getActivity().getApplicationContext().getPackageName());
+        Activity activity = this.cordova.getActivity();
+        Point size = getDisplaySize(activity);
 
+        intentScan.setPackage(activity.getApplicationContext().getPackageName());
+
+        int width = size.y;
+        int height = (int)(size.x*0.4);
+
+        intentScan.putExtra(Intents.Scan.WIDTH, width);
+        intentScan.putExtra(Intents.Scan.HEIGHT, height);
+        intentScan.putExtra(Intents.Scan.FORMATS, "CODE_39,CODE_128");
         this.cordova.startActivityForResult((CordovaPlugin) this, intentScan, REQUEST_CODE);
     }
 

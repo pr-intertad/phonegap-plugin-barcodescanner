@@ -10,17 +10,18 @@
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 #import <AssetsLibrary/AssetsLibrary.h>
-#import <AudioToolbox/AudioToolbox.h>
 
 //------------------------------------------------------------------------------
 // use the all-in-one version of zxing that we built
 //------------------------------------------------------------------------------
 #import "zxing-all-in-one.h"
+
 #import <Cordova/CDVPlugin.h>
 
 
 //------------------------------------------------------------------------------
 // Delegate to handle orientation functions
+// 
 //------------------------------------------------------------------------------
 @protocol CDVBarcodeScannerOrientationDelegate <NSObject>
 
@@ -47,7 +48,6 @@
 - (NSString*)isScanNotPossible;
 - (void)scan:(CDVInvokedUrlCommand*)command;
 - (void)encode:(CDVInvokedUrlCommand*)command;
-- (void)returnImage:(NSString*)filePath format:(NSString*)format callback:(NSString*)callback;
 - (void)returnSuccess:(NSString*)scannedText format:(NSString*)format cancelled:(BOOL)cancelled flipped:(BOOL)flipped callback:(NSString*)callback;
 - (void)returnError:(NSString*)message callback:(NSString*)callback;
 @end
@@ -63,6 +63,7 @@
 @property (nonatomic, retain) AVCaptureSession*           captureSession;
 @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
 @property (nonatomic, retain) NSString*                   alternateXib;
+@property (nonatomic)         AVCaptureVideoOrientation   captureOrientation;
 @property (nonatomic)         BOOL                        is1D;
 @property (nonatomic)         BOOL                        is2D;
 @property (nonatomic)         BOOL                        capturing;
@@ -86,19 +87,6 @@
 @end
 
 //------------------------------------------------------------------------------
-// Qr encoder processor
-//------------------------------------------------------------------------------
-@interface CDVqrProcessor: NSObject
-@property (nonatomic, retain) CDVBarcodeScanner*          plugin;
-@property (nonatomic, retain) NSString*                   callback;
-@property (nonatomic, retain) NSString*                   stringToEncode;
-@property                     NSInteger                   size;
-
-- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback stringToEncode:(NSString*)stringToEncode;
-- (void)generateImage;
-@end
-
-//------------------------------------------------------------------------------
 // view controller for the ui
 //------------------------------------------------------------------------------
 @interface CDVbcsViewController : UIViewController <CDVBarcodeScannerOrientationDelegate> {}
@@ -112,7 +100,7 @@
 - (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib;
 - (void)startCapturing;
 - (UIView*)buildOverlayView;
-- (UIImage*)buildReticleImage;
+- (UIImage*)buildReticleImage: (CGSize) rectAreaSize;
 - (void)shutterButtonPressed;
 - (IBAction)cancelButtonPressed:(id)sender;
 
@@ -143,7 +131,7 @@
     
     callback = command.callbackId;
     
-    // We allow the user to define an alternate xib file for loading the overlay.
+    // We allow the user to define an alternate xib file for loading the overlay. 
     NSString *overlayXib = nil;
     if ( [command.arguments count] >= 1 )
     {
@@ -171,44 +159,14 @@
 
 //--------------------------------------------------------------------------
 - (void)encode:(CDVInvokedUrlCommand*)command {
-    if([command.arguments count] < 1)
-        [self returnError:@"Too few arguments!" callback:command.callbackId];
-    
-    CDVqrProcessor* processor;
-    NSString*       callback;
-    callback = command.callbackId;
-    
-    processor = [[CDVqrProcessor alloc]
-                 initWithPlugin:self
-                 callback:callback
-                 stringToEncode: command.arguments[0][@"data"]
-                 ];
-    
-    [processor retain];
-    [processor retain];
-    [processor retain];
-    // queue [processor generateImage] to run on the event loop
-    [processor performSelector:@selector(generateImage) withObject:nil afterDelay:0];
-}
-
-- (void)returnImage:(NSString*)filePath format:(NSString*)format callback:(NSString*)callback{
-    NSMutableDictionary* resultDict = [[[NSMutableDictionary alloc] init] autorelease];
-    [resultDict setObject:format forKey:@"format"];
-    [resultDict setObject:filePath forKey:@"file"];
-    
-    CDVPluginResult* result = [CDVPluginResult
-                               resultWithStatus: CDVCommandStatus_OK
-                               messageAsDictionary:resultDict
-                               ];
-    
-    [[self commandDelegate] sendPluginResult:result callbackId:callback];
+    [self returnError:@"encode function not supported" callback:command.callbackId];
 }
 
 //--------------------------------------------------------------------------
 - (void)returnSuccess:(NSString*)scannedText format:(NSString*)format cancelled:(BOOL)cancelled flipped:(BOOL)flipped callback:(NSString*)callback{
     NSNumber* cancelledNumber = [NSNumber numberWithInt:(cancelled?1:0)];
     
-    NSMutableDictionary* resultDict = [[NSMutableDictionary alloc] init];
+    NSMutableDictionary* resultDict = [[[NSMutableDictionary alloc] init] autorelease];
     [resultDict setObject:scannedText     forKey:@"text"];
     [resultDict setObject:format          forKey:@"format"];
     [resultDict setObject:cancelledNumber forKey:@"cancelled"];
@@ -217,17 +175,23 @@
                                resultWithStatus: CDVCommandStatus_OK
                                messageAsDictionary: resultDict
                                ];
-    [self.commandDelegate sendPluginResult:result callbackId:callback];
+    
+    NSString* js = [result toSuccessCallbackString:callback];
+    if (!flipped) {
+        [self writeJavascript:js];
+    }
 }
 
 //--------------------------------------------------------------------------
 - (void)returnError:(NSString*)message callback:(NSString*)callback {
     CDVPluginResult* result = [CDVPluginResult
-                               resultWithStatus: CDVCommandStatus_ERROR
+                               resultWithStatus: CDVCommandStatus_OK
                                messageAsString: message
                                ];
     
-    [self.commandDelegate sendPluginResult:result callbackId:callback];
+    NSString* js = [result toErrorCallbackString:callback];
+    
+    [self writeJavascript:js];
 }
 
 @end
@@ -248,8 +212,6 @@
 @synthesize is2D                 = _is2D;
 @synthesize capturing            = _capturing;
 
-SystemSoundID _soundFileObject;
-
 //--------------------------------------------------------------------------
 - (id)initWithPlugin:(CDVBarcodeScanner*)plugin
             callback:(NSString*)callback
@@ -267,9 +229,6 @@ parentViewController:(UIViewController*)parentViewController
     self.is2D      = YES;
     self.capturing = NO;
     
-    CFURLRef soundFileURLRef  = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("CDVBarcodeScanner.bundle/beep"), CFSTR ("caf"), NULL);
-    AudioServicesCreateSystemSoundID(soundFileURLRef, &_soundFileObject);
-    
     return self;
 }
 
@@ -285,9 +244,6 @@ parentViewController:(UIViewController*)parentViewController
     
     self.capturing = NO;
     
-    AudioServicesRemoveSystemSoundCompletion(_soundFileObject);
-    AudioServicesDisposeSystemSoundID(_soundFileObject);
-    
     [super dealloc];
 }
 
@@ -302,7 +258,7 @@ parentViewController:(UIViewController*)parentViewController
         return;
     }
     
-    self.viewController = [[CDVbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib];
+    self.viewController = [[[CDVbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib] autorelease];
     // here we set the orientation delegate to the MainViewController of the app (orientation controlled in the Project Settings)
     self.viewController.orientationDelegate = self.plugin.viewController;
     
@@ -313,8 +269,8 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 - (void)openDialog {
     [self.parentViewController
-     presentViewController:self.viewController
-     animated:YES completion:nil
+     presentModalViewController:self.viewController
+     animated:YES
      ];
 }
 
@@ -322,20 +278,20 @@ parentViewController:(UIViewController*)parentViewController
 - (void)barcodeScanDone {
     self.capturing = NO;
     [self.captureSession stopRunning];
-    [self.parentViewController dismissViewControllerAnimated:YES completion:nil];
+    [self.parentViewController dismissModalViewControllerAnimated: YES];
     
     // viewcontroller holding onto a reference to us, release them so they
     // will release us
     self.viewController = nil;
+    
+    // delayed [self release];
+    [self performSelector:@selector(release) withObject:nil afterDelay:1];
 }
 
 //--------------------------------------------------------------------------
 - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format {
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        [self barcodeScanDone];
-        AudioServicesPlaySystemSound(_soundFileObject);
-        [self.plugin returnSuccess:text format:format cancelled:FALSE flipped:FALSE callback:self.callback];
-    });
+    [self barcodeScanDone];
+    [self.plugin returnSuccess:text format:format cancelled:FALSE flipped:FALSE callback:self.callback];
 }
 
 //--------------------------------------------------------------------------
@@ -366,12 +322,12 @@ parentViewController:(UIViewController*)parentViewController
 - (NSString*)setUpCaptureSession {
     NSError* error = nil;
     
-    AVCaptureSession* captureSession = [[AVCaptureSession alloc] init];
+    AVCaptureSession* captureSession = [[[AVCaptureSession alloc] init] autorelease];
     self.captureSession = captureSession;
     
-    AVCaptureDevice* __block device = nil;
+       AVCaptureDevice* __block device = nil;
     if (self.isFrontCamera) {
-        
+    
         NSArray* devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
         [devices enumerateObjectsUsingBlock:^(AVCaptureDevice *obj, NSUInteger idx, BOOL *stop) {
             if (obj.position == AVCaptureDevicePositionFront) {
@@ -384,11 +340,13 @@ parentViewController:(UIViewController*)parentViewController
         
     }
     
+    NSLog(@"setUpCaptureSession");
+
     
     AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
     if (!input) return @"unable to obtain video capture device input";
     
-    AVCaptureVideoDataOutput* output = [[AVCaptureVideoDataOutput alloc] init];
+    AVCaptureVideoDataOutput* output = [[[AVCaptureVideoDataOutput alloc] init] autorelease];
     if (!output) return @"unable to obtain video capture output";
     
     NSDictionary* videoOutputSettings = [NSDictionary
@@ -399,7 +357,7 @@ parentViewController:(UIViewController*)parentViewController
     output.alwaysDiscardsLateVideoFrames = YES;
     output.videoSettings = videoOutputSettings;
     
-    [output setSampleBufferDelegate:self queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)];
+    [output setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
     
     if (![captureSession canSetSessionPreset:AVCaptureSessionPresetMedium]) {
         return @"unable to preset medium quality video capture";
@@ -437,11 +395,15 @@ parentViewController:(UIViewController*)parentViewController
     
     if (!self.capturing) return;
     
+    if ([connection isVideoOrientationSupported]) {
+        [connection setVideoOrientation: self.captureOrientation];
+    }
+    
 #if USE_SHUTTER
     if (!self.viewController.shutterPressed) return;
     self.viewController.shutterPressed = NO;
     
-    UIView* flashView = [[UIView alloc] initWithFrame:self.viewController.view.frame];
+    UIView* flashView = [[[UIView alloc] initWithFrame:self.viewController.view.frame] autorelease];
     [flashView setBackgroundColor:[UIColor whiteColor]];
     [self.viewController.view.window addSubview:flashView];
     
@@ -470,19 +432,25 @@ parentViewController:(UIViewController*)parentViewController
     
     try {
         DecodeHints decodeHints;
-        decodeHints.addFormat(BarcodeFormat_QR_CODE);
+        
+        /*decodeHints.addFormat(BarcodeFormat_QR_CODE);
         decodeHints.addFormat(BarcodeFormat_DATA_MATRIX);
         decodeHints.addFormat(BarcodeFormat_UPC_E);
         decodeHints.addFormat(BarcodeFormat_UPC_A);
         decodeHints.addFormat(BarcodeFormat_EAN_8);
-        decodeHints.addFormat(BarcodeFormat_EAN_13);
+        decodeHints.addFormat(BarcodeFormat_EAN_13);*/
         decodeHints.addFormat(BarcodeFormat_CODE_128);
         decodeHints.addFormat(BarcodeFormat_CODE_39);
-        decodeHints.addFormat(BarcodeFormat_ITF);
+        //decodeHints.addFormat(BarcodeFormat_ITF);
+        
+        //decodeHints.setTryHarder(true);
+        
+        
+    NSLog(@"Orientation: %d - %d - %d", connection.videoOrientation, self.previewLayer.connection.videoOrientation, self.previewLayer.orientation);
         
         // here's the meat of the decode process
         Ref<LuminanceSource>   luminanceSource   ([self getLuminanceSourceFromSample: sampleBuffer imageBytes:&imageBytes]);
-        //            [self dumpImage: [[self getImageFromLuminanceSource:luminanceSource] autorelease]];
+        // [self dumpImage: [[self getImageFromLuminanceSource:luminanceSource] autorelease]];
         Ref<Binarizer>         binarizer         (new HybridBinarizer(luminanceSource));
         Ref<BinaryBitmap>      bitmap            (new BinaryBitmap(binarizer));
         Ref<MultiFormatReader> reader            (new MultiFormatReader());
@@ -493,7 +461,7 @@ parentViewController:(UIViewController*)parentViewController
         
         
         const char* cString      = resultText->getText().c_str();
-        NSString*   resultString = [[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding];
+        NSString*   resultString = [[[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding] autorelease];
         
         [self barcodeScanSucceeded:resultString format:format];
         
@@ -549,9 +517,11 @@ parentViewController:(UIViewController*)parentViewController
     size_t   height      =            CVPixelBufferGetHeight(imageBuffer);
     uint8_t* baseAddress = (uint8_t*) CVPixelBufferGetBaseAddress(imageBuffer);
     
-    // only going to get 90% of the min(width,height) of the captured image
-    size_t    greyWidth  = 9 * MIN(width, height) / 10;
-    uint8_t*  greyData   = (uint8_t*) malloc(greyWidth * greyWidth);
+    // only going to get 40% of the height of the captured image
+    size_t    greyWidth  = width;
+    size_t    greyHeight  = 4*height/10;
+    
+    uint8_t*  greyData   = (uint8_t*) malloc(greyWidth * greyHeight);
     
     // remember this pointer so we can free it later
     *ptr = greyData;
@@ -561,27 +531,27 @@ parentViewController:(UIViewController*)parentViewController
         throw new zxing::ReaderException("out of memory");
     }
     
-    size_t offsetX = (width  - greyWidth) / 2;
-    size_t offsetY = (height - greyWidth) / 2;
+    size_t offsetX = 0;
+    size_t offsetY = (height - greyHeight) / 2;
     
     // pixel-by-pixel ...
-    for (size_t i=0; i<greyWidth; i++) {
+    for (size_t i=0; i<greyHeight; i++) {
         for (size_t j=0; j<greyWidth; j++) {
             // i,j are the coordinates from the sample buffer
             // ni, nj are the coordinates in the LuminanceSource
             // in this case, there's a rotation taking place
-            size_t ni = greyWidth-j;
-            size_t nj = i;
+            size_t ni = i;
+            size_t nj = j;
             
-            size_t baseOffset = (j+offsetY)*bytesPerRow + (i + offsetX)*4;
+            size_t baseOffset = (i+offsetY)*bytesPerRow + (j + offsetX)*4;
             
             // convert from color to grayscale
             // http://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale
             size_t value = 0.11 * baseAddress[baseOffset] +
             0.59 * baseAddress[baseOffset + 1] +
             0.30 * baseAddress[baseOffset + 2];
-            
-            greyData[nj*greyWidth + ni] = value;
+
+            greyData[ni*greyWidth+nj] = value;
         }
     }
     
@@ -590,7 +560,7 @@ parentViewController:(UIViewController*)parentViewController
     using namespace zxing;
     
     Ref<LuminanceSource> luminanceSource (
-                                          new GreyscaleLuminanceSource(greyData, (int)greyWidth, (int)greyWidth, 0, 0, (int)greyWidth, (int)greyWidth)
+                                          new GreyscaleLuminanceSource(greyData, greyWidth, greyHeight, 0, 0, greyWidth, greyHeight)
                                           );
     
     return luminanceSource;
@@ -632,7 +602,7 @@ parentViewController:(UIViewController*)parentViewController
     size_t height      = CVPixelBufferGetHeight(imageBuffer);
     
     uint8_t* baseAddress    = (uint8_t*) CVPixelBufferGetBaseAddress(imageBuffer);
-    int      length         = (int)(height * bytesPerRow);
+    int      length         = height * bytesPerRow;
     uint8_t* newBaseAddress = (uint8_t*) malloc(length);
     memcpy(newBaseAddress, baseAddress, length);
     baseAddress = newBaseAddress;
@@ -663,7 +633,7 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 - (void)dumpImage:(UIImage*)image {
     NSLog(@"writing image to library: %dx%d", (int)image.size.width, (int)image.size.height);
-    ALAssetsLibrary* assetsLibrary = [[ALAssetsLibrary alloc] init];
+    ALAssetsLibrary* assetsLibrary = [[[ALAssetsLibrary alloc] init] autorelease];
     [assetsLibrary
      writeImageToSavedPhotosAlbum:image.CGImage
      orientation:ALAssetOrientationUp
@@ -674,84 +644,6 @@ parentViewController:(UIViewController*)parentViewController
      ];
 }
 
-@end
-
-//------------------------------------------------------------------------------
-// qr encoder processor
-//------------------------------------------------------------------------------
-@implementation CDVqrProcessor
-@synthesize plugin               = _plugin;
-@synthesize callback             = _callback;
-@synthesize stringToEncode       = _stringToEncode;
-@synthesize size                 = _size;
-
-- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback stringToEncode:(NSString*)stringToEncode{
-    self = [super init];
-    if (!self) return self;
-    
-    self.plugin          = plugin;
-    self.callback        = callback;
-    self.stringToEncode  = stringToEncode;
-    self.size            = 300;
-    
-    return self;
-}
-
-//--------------------------------------------------------------------------
-- (void)dealloc {
-    self.plugin = nil;
-    self.callback = nil;
-    self.stringToEncode = nil;
-    
-    [super dealloc];
-}
-//--------------------------------------------------------------------------
-- (void)generateImage{
-    /* setup qr filter */
-    CIFilter *filter = [CIFilter filterWithName:@"CIQRCodeGenerator"];
-    [filter setDefaults];
-    
-    /* set filter's input message
-     * the encoding string has to be convert to a UTF-8 encoded NSData object */
-    [filter setValue:[self.stringToEncode dataUsingEncoding:NSUTF8StringEncoding]
-              forKey:@"inputMessage"];
-    
-    /* on ios >= 7.0  set low image error correction level */
-    if (floor(NSFoundationVersionNumber) >= NSFoundationVersionNumber_iOS_7_0)
-        [filter setValue:@"L" forKey:@"inputCorrectionLevel"];
-    
-    /* prepare cgImage */
-    CIImage *outputImage = [filter outputImage];
-    CIContext *context = [CIContext contextWithOptions:nil];
-    CGImageRef cgImage = [context createCGImage:outputImage
-                                       fromRect:[outputImage extent]];
-    
-    /* returned qr code image */
-    UIImage *qrImage = [UIImage imageWithCGImage:cgImage
-                                           scale:1.
-                                     orientation:UIImageOrientationUp];
-    /* resize generated image */
-    CGFloat width = _size;
-    CGFloat height = _size;
-    
-    UIGraphicsBeginImageContext(CGSizeMake(width, height));
-    
-    CGContextRef ctx = UIGraphicsGetCurrentContext();
-    CGContextSetInterpolationQuality(ctx, kCGInterpolationNone);
-    [qrImage drawInRect:CGRectMake(0, 0, width, height)];
-    qrImage = UIGraphicsGetImageFromCurrentImageContext();
-    
-    /* clean up */
-    UIGraphicsEndImageContext();
-    CGImageRelease(cgImage);
-    
-    /* save image to file */
-    NSString* filePath = [NSTemporaryDirectory() stringByAppendingPathComponent:@"tmpqrcode.jpeg"];
-    [UIImageJPEGRepresentation(qrImage, 1.0) writeToFile:filePath atomically:YES];
-    
-    /* return file path back to cordova */
-    [self.plugin returnImage:filePath format:@"QR_CODE" callback: self.callback];
-}
 @end
 
 //------------------------------------------------------------------------------
@@ -781,22 +673,18 @@ parentViewController:(UIViewController*)parentViewController
 //    self.processor = nil;
     self.shutterPressed = NO;
     self.alternateXib = nil;
-    self.overlayView = nil;
+    self.overlayView = nil;      
     [super dealloc];
 }
 
 //--------------------------------------------------------------------------
 - (void)loadView {
-    self.view = [[UIView alloc] initWithFrame: self.processor.parentViewController.view.frame];
+    self.view = [[[UIView alloc] initWithFrame: self.processor.parentViewController.view.frame] autorelease];
     
     // setup capture preview layer
     AVCaptureVideoPreviewLayer* previewLayer = self.processor.previewLayer;
     previewLayer.frame = self.view.bounds;
     previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-    
-    if ([previewLayer.connection isVideoOrientationSupported]) {
-        [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
-    }
     
     [self.view.layer insertSublayer:previewLayer below:[[self.view.layer sublayers] objectAtIndex:0]];
     
@@ -806,16 +694,32 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 - (void)viewWillAppear:(BOOL)animated {
     
-    // set video orientation to what the camera sees
-    self.processor.previewLayer.connection.videoOrientation = [[UIApplication sharedApplication] statusBarOrientation];
-    
     // this fixes the bug when the statusbar is landscape, and the preview layer
     // starts up in portrait (not filling the whole view)
-    self.processor.previewLayer.frame = self.view.bounds;
+    self.processor.previewLayer.frame = [[UIScreen mainScreen] bounds];
+
+    //Get Preview Layer connection
+    AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
+    
+    // set video orientation to what the camera sees
+    UIInterfaceOrientation appOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+    
+    if (appOrientation == UIInterfaceOrientationLandscapeLeft) {
+        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeLeft;
+    } else if (appOrientation == UIInterfaceOrientationLandscapeRight) {
+        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeRight;
+    } else {
+        self.processor.captureOrientation = AVCaptureVideoOrientationPortrait;
+    }
+    
+    if ([previewLayerConnection isVideoOrientationSupported]) {
+        [previewLayerConnection setVideoOrientation: self.processor.captureOrientation];
+    }
 }
 
 //--------------------------------------------------------------------------
 - (void)viewDidAppear:(BOOL)animated {
+    
     [self startCapturing];
     
     [super viewDidAppear:animated];
@@ -842,7 +746,7 @@ parentViewController:(UIViewController*)parentViewController
 }
 
 //--------------------------------------------------------------------------
-- (UIView *)buildOverlayViewFromXib
+- (UIView *)buildOverlayViewFromXib 
 {
     [[NSBundle mainBundle] loadNibNamed:self.alternateXib owner:self options:NULL];
     
@@ -852,7 +756,7 @@ parentViewController:(UIViewController*)parentViewController
         return nil;
     }
     
-    return self.overlayView;
+    return self.overlayView;        
 }
 
 //--------------------------------------------------------------------------
@@ -865,32 +769,33 @@ parentViewController:(UIViewController*)parentViewController
     CGRect bounds = self.view.bounds;
     bounds = CGRectMake(0, 0, bounds.size.width, bounds.size.height);
     
-    UIView* overlayView = [[UIView alloc] initWithFrame:bounds];
+    UIView* overlayView = [[[UIView alloc] initWithFrame:bounds] autorelease];
     overlayView.autoresizesSubviews = YES;
     overlayView.autoresizingMask    = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     overlayView.opaque              = NO;
-
-    UIToolbar* toolbar = [[UIToolbar alloc] init];
+    
+    UIToolbar* toolbar = [[[UIToolbar alloc] init] autorelease];
     toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     
-    id cancelButton = [[UIBarButtonItem alloc]
+    id cancelButton = [[[UIBarButtonItem alloc] autorelease]
                        initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                        target:(id)self
                        action:@selector(cancelButtonPressed:)
                        ];
     
     
-    id flexSpace = [[UIBarButtonItem alloc]
+    id flexSpace = [[[UIBarButtonItem alloc] autorelease]
                     initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                     target:nil
                     action:nil
                     ];
     
-    id flipCamera = [[UIBarButtonItem alloc]
+    id flipCamera = [[[UIBarButtonItem alloc] autorelease]
                        initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
                        target:(id)self
                        action:@selector(flipCameraButtonPressed:)
                        ];
+
     
 #if USE_SHUTTER
     id shutterButton = [[UIBarButtonItem alloc]
@@ -914,8 +819,6 @@ parentViewController:(UIViewController*)parentViewController
     
     [overlayView addSubview: toolbar];
     
-    UIImage* reticleImage = [self buildReticleImage];
-    UIView* reticleView = [[UIImageView alloc] initWithImage: reticleImage];
     CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
     
     rectArea = CGRectMake(
@@ -924,6 +827,10 @@ parentViewController:(UIViewController*)parentViewController
                           minAxis,
                           minAxis
                           );
+    
+    UIImage* reticleImage = [self buildReticleImage: rectArea.size];
+    UIView* reticleView = [[[UIImageView alloc] initWithImage: reticleImage] autorelease];
+
     
     [reticleView setFrame:rectArea];
     
@@ -944,42 +851,49 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 
 #define RETICLE_SIZE    500.0f
-#define RETICLE_WIDTH    10.0f
-#define RETICLE_OFFSET   60.0f
-#define RETICLE_ALPHA     0.4f
+#define RETICLE_WIDTH     3.0f
+#define RETICLE_OFFSET_X  0.0f
+#define RETICLE_OFFSET_Y  0.0f
+#define RETICLE_ALPHA     0.2f
+#define RETICLE_PADDING  10.0f
 
 //-------------------------------------------------------------------------
 // builds the green box and red line
 //-------------------------------------------------------------------------
-- (UIImage*)buildReticleImage {
+- (UIImage*)buildReticleImage: (CGSize) rectAreaSize
+{
     UIImage* result;
-    UIGraphicsBeginImageContext(CGSizeMake(RETICLE_SIZE, RETICLE_SIZE));
+    UIGraphicsBeginImageContext(CGSizeMake(rectAreaSize.width-RETICLE_PADDING,rectAreaSize.height-RETICLE_PADDING));
     CGContextRef context = UIGraphicsGetCurrentContext();
     
+    size_t x0 = 0;
+    size_t x1 = rectAreaSize.width-2*x0;
+    
     if (self.processor.is1D) {
+        size_t y = rectAreaSize.height/2-0.5*RETICLE_WIDTH;
+        
         UIColor* color = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:RETICLE_ALPHA];
         CGContextSetStrokeColorWithColor(context, color.CGColor);
         CGContextSetLineWidth(context, RETICLE_WIDTH);
         CGContextBeginPath(context);
-        CGFloat lineOffset = RETICLE_OFFSET+(0.5*RETICLE_WIDTH);
-        CGContextMoveToPoint(context, lineOffset, RETICLE_SIZE/2);
-        CGContextAddLineToPoint(context, RETICLE_SIZE-lineOffset, 0.5*RETICLE_SIZE);
+        CGContextMoveToPoint(context, x0+0.5*RETICLE_WIDTH, y);
+        CGContextAddLineToPoint(context, x1, y);
         CGContextStrokePath(context);
     }
     
-    if (self.processor.is2D) {
-        UIColor* color = [UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:RETICLE_ALPHA];
+    /*if (self.processor.is2D) {
+        UIColor* color = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:RETICLE_ALPHA];
         CGContextSetStrokeColorWithColor(context, color.CGColor);
         CGContextSetLineWidth(context, RETICLE_WIDTH);
         CGContextStrokeRect(context,
                             CGRectMake(
-                                       RETICLE_OFFSET,
-                                       RETICLE_OFFSET,
-                                       RETICLE_SIZE-2*RETICLE_OFFSET,
-                                       RETICLE_SIZE-2*RETICLE_OFFSET
+                                       x0,
+                                       rectAreaSize.height*0.3,
+                                       x1-x0,
+                                       rectAreaSize.height*0.4
                                        )
                             );
-    }
+    }*/
     
     result = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
@@ -989,8 +903,8 @@ parentViewController:(UIViewController*)parentViewController
 #pragma mark CDVBarcodeScannerOrientationDelegate
 
 - (BOOL)shouldAutorotate
-{
-    return NO;
+{   
+    return YES;
 }
 
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
@@ -1000,7 +914,7 @@ parentViewController:(UIViewController*)parentViewController
 
 - (NSUInteger)supportedInterfaceOrientations
 {
-    return UIInterfaceOrientationMaskPortrait;
+    return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskLandscapeLeft | UIInterfaceOrientationMaskLandscapeRight;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -1016,7 +930,15 @@ parentViewController:(UIViewController*)parentViewController
 {
     [CATransaction begin];
     
-    self.processor.previewLayer.connection.videoOrientation = orientation;
+    //Get Preview Layer connection
+    AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
+    
+    if ([previewLayerConnection isVideoOrientationSupported]) {
+        [previewLayerConnection setVideoOrientation: orientation];
+    }
+    
+    self.processor.captureOrientation = orientation;
+    
     [self.processor.previewLayer layoutSublayers];
     self.processor.previewLayer.frame = self.view.bounds;
     
