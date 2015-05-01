@@ -543,15 +543,15 @@ parentViewController:(UIViewController*)parentViewController
 // convert string to barcode format
 //--------------------------------------------------------------------------
 - (zxing::BarcodeFormat)formatFrom:(NSString*)formatString {
-    if ([formatString isEqualToString: @"QR_CODE"])     return zxing::BarcodeFormat_QR_CODE;
-    if ([formatString isEqualToString: @"DATA_MATRIX"]) return zxing::BarcodeFormat_DATA_MATRIX;
-    if ([formatString isEqualToString: @"UPC_E"])       return zxing::BarcodeFormat_UPC_E;
-    if ([formatString isEqualToString: @"UPC_A"])       return zxing::BarcodeFormat_UPC_A;
-    if ([formatString isEqualToString: @"EAN_8"])       return zxing::BarcodeFormat_EAN_8;
-    if ([formatString isEqualToString: @"EAN_13"])      return zxing::BarcodeFormat_EAN_13;
-    if ([formatString isEqualToString: @"CODE_128"])    return zxing::BarcodeFormat_CODE_128;
-    if ([formatString isEqualToString: @"CODE_39"])     return zxing::BarcodeFormat_CODE_39;
-    if ([formatString isEqualToString: @"ITF"])         return zxing::BarcodeFormat_ITF;
+    if ([formatString isEqualToString: @"QR_CODE"])		return zxing::BarcodeFormat_QR_CODE;
+    if ([formatString isEqualToString: @"DATA_MATRIX"])	return zxing::BarcodeFormat_DATA_MATRIX;
+    if ([formatString isEqualToString: @"UPC_E"])		return zxing::BarcodeFormat_UPC_E;
+    if ([formatString isEqualToString: @"UPC_A"])		return zxing::BarcodeFormat_UPC_A;
+    if ([formatString isEqualToString: @"EAN_8"])		return zxing::BarcodeFormat_EAN_8;
+    if ([formatString isEqualToString: @"EAN_13"])		return zxing::BarcodeFormat_EAN_13;
+    if ([formatString isEqualToString: @"CODE_128"])	return zxing::BarcodeFormat_CODE_128;
+    if ([formatString isEqualToString: @"CODE_39"])		return zxing::BarcodeFormat_CODE_39;
+    if ([formatString isEqualToString: @"ITF"])		    return zxing::BarcodeFormat_ITF;
     return zxing::BarcodeFormat_None;
 }
 //--------------------------------------------------------------------------
@@ -748,7 +748,7 @@ parentViewController:(UIViewController*)parentViewController
     
     // this fixes the bug when the statusbar is landscape, and the preview layer
     // starts up in portrait (not filling the whole view)
-    self.processor.previewLayer.frame = [[UIScreen mainScreen] bounds];
+    //self.processor.previewLayer.frame = [[UIScreen mainScreen] bounds];
 
     //Get Preview Layer connection
     AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
@@ -767,6 +767,10 @@ parentViewController:(UIViewController*)parentViewController
     if ([previewLayerConnection isVideoOrientationSupported]) {
         [previewLayerConnection setVideoOrientation: self.processor.captureOrientation];
     }
+    
+    // this fixes the bug when the statusbar is landscape, and the preview layer
+    // starts up in portrait (not filling the whole view)
+    self.processor.previewLayer.frame = self.view.bounds;
 }
 
 //--------------------------------------------------------------------------
