@@ -48,6 +48,10 @@ public class BarcodeScanner extends CordovaPlugin {
     private static final String PHONE_TYPE = "PHONE_TYPE";
     private static final String SMS_TYPE = "SMS_TYPE";
 
+    private static final String PARAM_HEIGHT = "height";
+    private static final String PARAM_WIDTH = "width";
+    private static final String PARAM_FORMAT = "format";
+
     private static final String LOG_TAG = "BarcodeScanner";
 
     private CallbackContext callbackContext;
@@ -115,7 +119,7 @@ public class BarcodeScanner extends CordovaPlugin {
                 return true;
             }
         } else if (action.equals(SCAN)) {
-            scan();
+            scan(args);
         } else {
             return false;
         }
@@ -125,22 +129,84 @@ public class BarcodeScanner extends CordovaPlugin {
     /**
      * Starts an intent to scan and decode a barcode.
      */
-    public void scan() {
+    public void scan(JSONArray args) {
         Intent intentScan = new Intent(SCAN_INTENT);
         intentScan.addCategory(Intent.CATEGORY_DEFAULT);
+
         // avoid calling other phonegap apps
         Activity activity = this.cordova.getActivity();
-        Point size = getDisplaySize(activity);
+        Point displaySize = getDisplaySize(activity);
 
-        intentScan.setPackage(activity.getApplicationContext().getPackageName());
+        // add config as intent extras
+        if(args.length() > 0) {
 
-        int width = size.y;
-        int height = (int)(size.x*0.4);
+            JSONObject obj;
+            JSONArray names;
+            String key;
+            Object value;
 
-        intentScan.putExtra(Intents.Scan.WIDTH, width);
-        intentScan.putExtra(Intents.Scan.HEIGHT, height);
-        intentScan.putExtra(Intents.Scan.FORMATS, "CODE_39,CODE_128");
+            for(int i=0; i<args.length(); i++) {
+
+                try {
+                    obj = args.getJSONObject(i);
+                } catch(JSONException e) {
+                    Log.i("CordovaLog", e.getLocalizedMessage());
+                    continue;
+                }
+
+                names = obj.names();
+                for(int j=0; j<names.length(); j++) {
+                    try {
+                        key = names.getString(j);
+                        value = obj.get(key);
+
+                        // add additional handling of custom configuration params
+                        if (PARAM_HEIGHT.equalsIgnoreCase(key)) {
+                            key = Intents.Scan.HEIGHT;
+                            value = calculateEdge(value, displaySize.x);
+                        } else if (PARAM_WIDTH.equalsIgnoreCase(key)) {
+                            key = Intents.Scan.WIDTH;
+                            value = calculateEdge(value, displaySize.y);
+                        } else if (PARAM_FORMAT.equalsIgnoreCase(key)) {
+                            key = Intents.Scan.FORMATS;
+                        }
+
+                        if(value instanceof Integer) {
+                            intentScan.putExtra(key, (Integer)value);
+                        } else if(value instanceof String) {
+                            intentScan.putExtra(key, (String)value);
+                        }
+
+                    } catch(JSONException e) {
+                        Log.i("CordovaLog", e.getLocalizedMessage());
+                        continue;
+                    }
+                }
+            }
+
+        }
+
+        // avoid calling other phonegap apps
+        intentScan.setPackage(this.cordova.getActivity().getApplicationContext().getPackageName());
+
         this.cordova.startActivityForResult((CordovaPlugin) this, intentScan, REQUEST_CODE);
+    }
+
+    private Object calculateEdge(Object value, int x) {
+        Double scale = null;
+
+        if (value instanceof Double) {
+            scale = (Double)value;
+        } else if (value instanceof Integer) {
+            scale = ((Integer) value).doubleValue();
+        }
+
+        if (scale != null && scale > 0 && scale <= 1) {
+            scale *= x;
+            return scale.intValue();
+        }
+
+        return null;
     }
 
     /**
