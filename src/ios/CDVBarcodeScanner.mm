@@ -18,7 +18,6 @@
 
 #import <Cordova/CDVPlugin.h>
 
-
 //------------------------------------------------------------------------------
 // Delegate to handle orientation functions
 // 
@@ -36,10 +35,17 @@
 // only performing a scan when you click the shutter button.  For testing.
 //------------------------------------------------------------------------------
 #define USE_SHUTTER 0
+#define CONFIG_XIB      @"alternateXib"
+#define CONFIG_FORMAT   @"format"
+#define CONFIG_WIDTH    @"width"
+#define CONFIG_HEIGHT   @"height"
+
+#define DEFAULT_SCALE 0.7
 
 //------------------------------------------------------------------------------
 @class CDVbcsProcessor;
 @class CDVbcsViewController;
+
 
 //------------------------------------------------------------------------------
 // plugin class
@@ -63,6 +69,9 @@
 @property (nonatomic, retain) AVCaptureSession*           captureSession;
 @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
 @property (nonatomic, retain) NSString*                   alternateXib;
+@property (nonatomic, retain) NSString*                   formats;
+@property (nonatomic)         double                      scanHeight;
+@property (nonatomic)         double                      scanWidth;
 @property (nonatomic)         AVCaptureVideoOrientation   captureOrientation;
 @property (nonatomic)         BOOL                        is1D;
 @property (nonatomic)         BOOL                        is2D;
@@ -71,7 +80,7 @@
 @property (nonatomic)         BOOL                        isFlipped;
 
 
-- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController alterateOverlayXib:(NSString *)alternateXib;
+- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController config:(NSDictionary *)config;
 - (void)scanBarcode;
 - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format;
 - (void)barcodeScanFailed:(NSString*)message;
@@ -80,6 +89,7 @@
 - (NSString*)setUpCaptureSession;
 - (void)captureOutput:(AVCaptureOutput*)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection*)connection;
 - (NSString*)formatStringFrom:(zxing::BarcodeFormat)format;
+- (zxing::BarcodeFormat)formatFrom:(NSString*)formatString;
 - (UIImage*)getImageFromSample:(CMSampleBufferRef)sampleBuffer;
 - (zxing::Ref<zxing::LuminanceSource>) getLuminanceSourceFromSample:(CMSampleBufferRef)sampleBuffer imageBytes:(uint8_t**)ptr;
 - (UIImage*) getImageFromLuminanceSource:(zxing::LuminanceSource*)luminanceSource;
@@ -100,7 +110,7 @@
 - (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib;
 - (void)startCapturing;
 - (UIView*)buildOverlayView;
-- (UIImage*)buildReticleImage: (CGSize) rectAreaSize;
+- (UIImage*)buildReticleImage: (CGRect) rectArea;
 - (void)shutterButtonPressed;
 - (IBAction)cancelButtonPressed:(id)sender;
 
@@ -132,10 +142,11 @@
     callback = command.callbackId;
     
     // We allow the user to define an alternate xib file for loading the overlay. 
-    NSString *overlayXib = nil;
+    NSDictionary *config = nil;
+    
     if ( [command.arguments count] >= 1 )
     {
-        overlayXib = [command.arguments objectAtIndex:0];
+        config = [command.arguments objectAtIndex:0];
     }
     
     capabilityError = [self isScanNotPossible];
@@ -148,7 +159,7 @@
                  initWithPlugin:self
                  callback:callback
                  parentViewController:self.viewController
-                 alterateOverlayXib:overlayXib
+                 config:config
                  ];
     [processor retain];
     [processor retain];
@@ -216,14 +227,29 @@
 - (id)initWithPlugin:(CDVBarcodeScanner*)plugin
             callback:(NSString*)callback
 parentViewController:(UIViewController*)parentViewController
-  alterateOverlayXib:(NSString *)alternateXib {
+  config:(NSDictionary *)config {
     self = [super init];
     if (!self) return self;
     
     self.plugin               = plugin;
     self.callback             = callback;
     self.parentViewController = parentViewController;
-    self.alternateXib         = alternateXib;
+    
+    if (config != nil) {
+        self.alternateXib         = [config objectForKey:CONFIG_XIB];
+        self.formats              = [config objectForKey: CONFIG_FORMAT];
+        self.scanHeight           = [[config objectForKey: CONFIG_HEIGHT] doubleValue];
+        self.scanWidth            = [[config objectForKey: CONFIG_WIDTH] doubleValue];
+    }
+    
+    if (self.scanHeight <= 0 || self.scanHeight > 1)
+    {
+        self.scanHeight = -1;
+    }
+    if (self.scanWidth <= 0 || self.scanWidth > 1)
+    {
+        self.scanWidth = -1;
+    }
     
     self.is1D      = YES;
     self.is2D      = YES;
@@ -433,20 +459,29 @@ parentViewController:(UIViewController*)parentViewController
     try {
         DecodeHints decodeHints;
         
-        /*decodeHints.addFormat(BarcodeFormat_QR_CODE);
-        decodeHints.addFormat(BarcodeFormat_DATA_MATRIX);
-        decodeHints.addFormat(BarcodeFormat_UPC_E);
-        decodeHints.addFormat(BarcodeFormat_UPC_A);
-        decodeHints.addFormat(BarcodeFormat_EAN_8);
-        decodeHints.addFormat(BarcodeFormat_EAN_13);*/
-        decodeHints.addFormat(BarcodeFormat_CODE_128);
-        decodeHints.addFormat(BarcodeFormat_CODE_39);
-        //decodeHints.addFormat(BarcodeFormat_ITF);
-        
-        //decodeHints.setTryHarder(true);
-        
-        
-    NSLog(@"Orientation: %d - %d - %d", connection.videoOrientation, self.previewLayer.connection.videoOrientation, self.previewLayer.orientation);
+        if (self.formats != nil)
+        {
+            NSArray *items = [self.formats componentsSeparatedByString:@","];
+            
+            for (id item in items)
+            {
+                NSString* formatString = (NSString*)item;
+                
+                decodeHints.addFormat([self formatFrom:formatString]);
+            }
+        }
+        else
+        {
+            decodeHints.addFormat(BarcodeFormat_QR_CODE);
+            decodeHints.addFormat(BarcodeFormat_DATA_MATRIX);
+            decodeHints.addFormat(BarcodeFormat_UPC_E);
+            decodeHints.addFormat(BarcodeFormat_UPC_A);
+            decodeHints.addFormat(BarcodeFormat_EAN_8);
+            decodeHints.addFormat(BarcodeFormat_EAN_13);
+            decodeHints.addFormat(BarcodeFormat_CODE_128);
+            decodeHints.addFormat(BarcodeFormat_CODE_39);
+            decodeHints.addFormat(BarcodeFormat_ITF);
+        }
         
         // here's the meat of the decode process
         Ref<LuminanceSource>   luminanceSource   ([self getLuminanceSourceFromSample: sampleBuffer imageBytes:&imageBytes]);
@@ -505,6 +540,21 @@ parentViewController:(UIViewController*)parentViewController
 }
 
 //--------------------------------------------------------------------------
+// convert string to barcode format
+//--------------------------------------------------------------------------
+- (zxing::BarcodeFormat)formatFrom:(NSString*)formatString {
+    if ([formatString isEqualToString: @"QR_CODE"])     return zxing::BarcodeFormat_QR_CODE;
+    if ([formatString isEqualToString: @"DATA_MATRIX"]) return zxing::BarcodeFormat_DATA_MATRIX;
+    if ([formatString isEqualToString: @"UPC_E"])       return zxing::BarcodeFormat_UPC_E;
+    if ([formatString isEqualToString: @"UPC_A"])       return zxing::BarcodeFormat_UPC_A;
+    if ([formatString isEqualToString: @"EAN_8"])       return zxing::BarcodeFormat_EAN_8;
+    if ([formatString isEqualToString: @"EAN_13"])      return zxing::BarcodeFormat_EAN_13;
+    if ([formatString isEqualToString: @"CODE_128"])    return zxing::BarcodeFormat_CODE_128;
+    if ([formatString isEqualToString: @"CODE_39"])     return zxing::BarcodeFormat_CODE_39;
+    if ([formatString isEqualToString: @"ITF"])         return zxing::BarcodeFormat_ITF;
+    return zxing::BarcodeFormat_None;
+}
+//--------------------------------------------------------------------------
 // convert capture's sample buffer (scanned picture) into the thing that
 // zxing needs.
 //--------------------------------------------------------------------------
@@ -517,9 +567,11 @@ parentViewController:(UIViewController*)parentViewController
     size_t   height      =            CVPixelBufferGetHeight(imageBuffer);
     uint8_t* baseAddress = (uint8_t*) CVPixelBufferGetBaseAddress(imageBuffer);
     
+    size_t minAxis = MIN(width, height);
+    
     // only going to get 40% of the height of the captured image
-    size_t    greyWidth  = width;
-    size_t    greyHeight  = 4*height/10;
+    size_t    greyWidth  = (self.scanWidth == -1) ? minAxis*DEFAULT_SCALE : self.scanWidth * width;
+    size_t    greyHeight  = (self.scanHeight == -1) ? minAxis*DEFAULT_SCALE: self.scanHeight * height;
     
     uint8_t*  greyData   = (uint8_t*) malloc(greyWidth * greyHeight);
     
@@ -531,7 +583,7 @@ parentViewController:(UIViewController*)parentViewController
         throw new zxing::ReaderException("out of memory");
     }
     
-    size_t offsetX = 0;
+    size_t offsetX = (width - greyWidth) / 2;
     size_t offsetY = (height - greyHeight) / 2;
     
     // pixel-by-pixel ...
@@ -819,29 +871,22 @@ parentViewController:(UIViewController*)parentViewController
     
     [overlayView addSubview: toolbar];
     
-    CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
-    
     rectArea = CGRectMake(
-                          0.5 * (rootViewWidth  - minAxis),
-                          0.5 * (rootViewHeight - minAxis),
-                          minAxis,
-                          minAxis
+                          0,
+                          0,
+                          rootViewHeight,
+                          rootViewWidth
                           );
     
-    UIImage* reticleImage = [self buildReticleImage: rectArea.size];
+    UIImage* reticleImage = [self buildReticleImage: rectArea];
     UIView* reticleView = [[[UIImageView alloc] initWithImage: reticleImage] autorelease];
 
     
-    [reticleView setFrame:rectArea];
+    [reticleView setFrame:overlayView.bounds];
     
     reticleView.opaque           = NO;
-    reticleView.contentMode      = UIViewContentModeScaleAspectFit;
-    reticleView.autoresizingMask = 0
-    | UIViewAutoresizingFlexibleLeftMargin
-    | UIViewAutoresizingFlexibleRightMargin
-    | UIViewAutoresizingFlexibleTopMargin
-    | UIViewAutoresizingFlexibleBottomMargin
-    ;
+    reticleView.contentMode      = UIViewContentModeScaleToFill;
+    reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
     
     [overlayView addSubview: reticleView];
     
@@ -854,23 +899,35 @@ parentViewController:(UIViewController*)parentViewController
 #define RETICLE_WIDTH     3.0f
 #define RETICLE_OFFSET_X  0.0f
 #define RETICLE_OFFSET_Y  0.0f
-#define RETICLE_ALPHA     0.2f
+#define RETICLE_ALPHA     0.4f
 #define RETICLE_PADDING  10.0f
 
 //-------------------------------------------------------------------------
 // builds the green box and red line
 //-------------------------------------------------------------------------
-- (UIImage*)buildReticleImage: (CGSize) rectAreaSize
+- (UIImage*)buildReticleImage: (CGRect) rectArea
 {
     UIImage* result;
-    UIGraphicsBeginImageContext(CGSizeMake(rectAreaSize.width-RETICLE_PADDING,rectAreaSize.height-RETICLE_PADDING));
+    UIGraphicsBeginImageContext(rectArea.size);
     CGContextRef context = UIGraphicsGetCurrentContext();
     
-    size_t x0 = 0;
-    size_t x1 = rectAreaSize.width-2*x0;
+    size_t minAxis = MIN(rectArea.size.height, rectArea.size.width);
+    
+    size_t height = (self.processor.scanHeight == -1) ?
+                        minAxis*DEFAULT_SCALE
+                        : rectArea.size.height*self.processor.scanHeight;
+    
+    size_t width = (self.processor.scanWidth == -1) ?
+                        minAxis*DEFAULT_SCALE
+                        : rectArea.size.width*self.processor.scanWidth;
+    
+    size_t x0 = (rectArea.size.width-width)/2;
+    size_t y0 = (rectArea.size.height-height)/2;
+    
+    size_t x1 = x0 + width;
     
     if (self.processor.is1D) {
-        size_t y = rectAreaSize.height/2-0.5*RETICLE_WIDTH;
+        size_t y = y0 + height/2;
         
         UIColor* color = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:RETICLE_ALPHA];
         CGContextSetStrokeColorWithColor(context, color.CGColor);
@@ -881,19 +938,19 @@ parentViewController:(UIViewController*)parentViewController
         CGContextStrokePath(context);
     }
     
-    /*if (self.processor.is2D) {
-        UIColor* color = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:RETICLE_ALPHA];
+    if (self.processor.is2D) {
+        UIColor* color = [UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:RETICLE_ALPHA];
         CGContextSetStrokeColorWithColor(context, color.CGColor);
         CGContextSetLineWidth(context, RETICLE_WIDTH);
         CGContextStrokeRect(context,
                             CGRectMake(
                                        x0,
-                                       rectAreaSize.height*0.3,
-                                       x1-x0,
-                                       rectAreaSize.height*0.4
+                                       y0,
+                                       width,
+                                       height
                                        )
                             );
-    }*/
+    }
     
     result = UIGraphicsGetImageFromCurrentImageContext();
     UIGraphicsEndImageContext();
@@ -909,12 +966,12 @@ parentViewController:(UIViewController*)parentViewController
 
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
-    return UIInterfaceOrientationPortrait;
+    return UIInterfaceOrientationLandscapeRight;
 }
 
 - (NSUInteger)supportedInterfaceOrientations
 {
-    return UIInterfaceOrientationMaskPortrait | UIInterfaceOrientationMaskLandscapeLeft | UIInterfaceOrientationMaskLandscapeRight;
+    return UIInterfaceOrientationMaskLandscapeRight;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
