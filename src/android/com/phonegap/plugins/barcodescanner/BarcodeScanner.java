@@ -74,6 +74,9 @@ public class BarcodeScanner extends CordovaPlugin {
             size.set(display.getHeight(), display.getWidth());
         }
 
+        // discard orientation info
+        size.set(Math.min(size.x, size.y), Math.max(size.x, size.y));
+
         return size;
     }
 
@@ -137,6 +140,10 @@ public class BarcodeScanner extends CordovaPlugin {
         Activity activity = this.cordova.getActivity();
         Point displaySize = getDisplaySize(activity);
 
+        // set default size for scanning area
+        intentScan.putExtra(Intents.Scan.WIDTH, calculateEdge(0.5, displaySize.y));
+        intentScan.putExtra(Intents.Scan.HEIGHT, calculateEdge(0.5, displaySize.x));
+
         // add config as intent extras
         if(args.length() > 0) {
 
@@ -192,7 +199,7 @@ public class BarcodeScanner extends CordovaPlugin {
         this.cordova.startActivityForResult((CordovaPlugin) this, intentScan, REQUEST_CODE);
     }
 
-    private Object calculateEdge(Object value, int x) {
+    private Integer calculateEdge(Object value, int x) {
         Double scale = null;
 
         if (value instanceof Double) {

@@ -97,7 +97,18 @@
                 return;
             }
 
-            exec(successCallback, errorCallback, 'BarcodeScanner', 'scan', config);
+            var vinChecker = function(result) {
+                if (result != null && (result.format == 'CODE_39' || result.format == 'CODE_128')) {
+                    var text = result.text;
+                    if (text != null && text.length == 18 && text[0] == 'I') {
+                        text = text.substr(1);
+                        result.text = text;
+                    }
+                }
+                successCallback(result);
+            };
+
+            exec(vinChecker, errorCallback, 'BarcodeScanner', 'scan', config);
         };
 
         //-------------------------------------------------------------------
