@@ -72,6 +72,8 @@ public enum BarcodeFormat {
   UPC_E,
 
   /** UPC/EAN extension format. Not a stand-alone format. */
-  UPC_EAN_EXTENSION
+  UPC_EAN_EXTENSION,
 
+  /* VIN code format */
+  VIN_CODE
 }

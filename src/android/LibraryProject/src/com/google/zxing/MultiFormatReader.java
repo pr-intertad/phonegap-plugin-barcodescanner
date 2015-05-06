@@ -22,6 +22,7 @@ import com.google.zxing.maxicode.MaxiCodeReader;
 import com.google.zxing.oned.MultiFormatOneDReader;
 import com.google.zxing.pdf417.PDF417Reader;
 import com.google.zxing.qrcode.QRCodeReader;
+import com.google.zxing.vin.MultiFormatVINCodeReader;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,6 +116,9 @@ public final class MultiFormatReader implements Reader {
       // Put 1D readers upfront in "normal" mode
       if (addOneDReader && !tryHarder) {
         readers.add(new MultiFormatOneDReader(hints));
+      }
+      if (formats.contains(BarcodeFormat.VIN_CODE)) {
+        readers.add(new MultiFormatVINCodeReader(hints));
       }
       if (formats.contains(BarcodeFormat.QR_CODE)) {
         readers.add(new QRCodeReader());
