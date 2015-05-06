@@ -35,6 +35,7 @@ const char *barcodeFormatNames[] = {
     "EAN_13",
     "CODE_128",
     "CODE_39",
+    "VIN_CODE",
     "ITF"
 };
 
@@ -222,6 +223,7 @@ void DecodeHints::addFormat(BarcodeFormat toadd) {
     case BarcodeFormat_CODE_128: hints |= BARCODEFORMAT_CODE_128_HINT; break;
     case BarcodeFormat_CODE_39: hints |= BARCODEFORMAT_CODE_39_HINT; break;
     case BarcodeFormat_ITF: hints |= BARCODEFORMAT_ITF_HINT; break;
+    case BarcodeFormat_VIN_CODE: hints |= BARCODEFORMAT_VIN_CODE_HINT; break;
     default: throw IllegalArgumentException("Unrecognizd barcode format");
   }
 }
@@ -238,6 +240,7 @@ bool DecodeHints::containsFormat(BarcodeFormat tocheck) const {
     case BarcodeFormat_CODE_128: checkAgainst = BARCODEFORMAT_CODE_128_HINT; break;
     case BarcodeFormat_CODE_39: checkAgainst = BARCODEFORMAT_CODE_39_HINT; break;
     case BarcodeFormat_ITF: checkAgainst = BARCODEFORMAT_ITF_HINT; break;
+    case BarcodeFormat_VIN_CODE: checkAgainst = BARCODEFORMAT_VIN_CODE_HINT; break;
     default: throw IllegalArgumentException("Unrecognizd barcode format");
   }
   return (hints & checkAgainst);
@@ -496,6 +499,9 @@ namespace zxing {
                          hints.containsFormat(BarcodeFormat_ITF);
     if (addOneDReader && !tryHarder) {
       readers_.push_back(Ref<Reader>(new zxing::oned::MultiFormatOneDReader(hints)));
+    }
+    if (hints.containsFormat(BarcodeFormat_VIN_CODE)) {
+      readers_.push_back(Ref<Reader>(new zxing::oned::VINReader()));
     }
     if (hints.containsFormat(BarcodeFormat_QR_CODE)) {
       readers_.push_back(Ref<Reader>(new zxing::qrcode::QRCodeReader()));
@@ -7812,6 +7818,203 @@ namespace zxing {
     }
   }
 }
+
+// file: zxing/oned/VINReader.cpp
+
+/*
+ *  VINReader.cpp
+ *  ZXing
+ *
+ *  Copyright 2010 ZXing authors All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// #include "MultiFormatOneDReader.h"
+
+// #include <zxing/oned/MultiFormatUPCEANReader.h>
+// #include <zxing/oned/Code39Reader.h>
+// #include <zxing/oned/Code128Reader.h>
+// #include <zxing/oned/ITFReader.h>
+// #include <zxing/ReaderException.h>
+
+namespace zxing {
+    namespace oned {
+        
+        struct toUpperCase {
+            void operator()(char& c) { c = toupper((unsigned char)c); }
+        };
+        
+        VINReader::VINReader() : readers() {
+            readers.push_back(Ref<OneDReader>(new Code39Reader()));
+            readers.push_back(Ref<OneDReader>(new Code128Reader()));
+        }
+        
+        Ref<Result> VINReader::decodeRow(int rowNumber, Ref<BitArray> row) {
+            int size = (int)readers.size();
+            for (int i = 0; i < size; i++) {
+                OneDReader* reader = readers[i];
+                Ref<Result> result = reader->decodeRow(rowNumber, row);
+                if (!result.empty()) {
+                    return verifyVIN(result);
+                }
+            }
+            return Ref<Result>();
+        }
+        
+        bool VINReader::isValidVIN(std::string str) {
+            int values[26] = {1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 2, 3, 4, 5, 0, 7, 0, 9, 2, 3, 4, 5, 6, 7, 8, 9};
+            int weights[17] = {8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2};
+            
+            std::string s(str);
+            
+            s.erase(std::remove(s.begin(), s.end(), '-'), s.end());
+            s.erase(std::remove(s.begin(), s.end(), ' '), s.end());
+            
+            // transform to uppercase
+            for_each(s.begin(), s.end(), toUpperCase());
+            
+            if (s.length() != 17)
+            {
+                // VIN number must be 17 characters
+                return false;
+            }
+            
+            int sum = 0;
+            for (int i = 0; i < 17; i++)
+            {
+                char c = s[i];
+                int value;
+                int weight = weights[i];
+                
+                // letter
+                if (c >= 'A' && c <= 'Z')
+                {
+                    value = values[c - 'A'];
+                    if (value == 0)
+                    {
+                        // illegal character
+                        return false;
+                    }
+                }
+                
+                // number
+                else if (c >= '0' && c <= '9')
+                {
+                    value = c - '0';
+                }
+                
+                // illegal character
+                else
+                {
+                    // illegal character
+                    return false;
+                }
+                
+                sum = sum + weight * value;
+                
+            }
+            
+            
+            // check digit
+            sum = sum % 11;
+            char check = s[8];
+            if (sum == 10 && check == 'X')
+            {
+                return true;
+            }
+            else if (sum == transliterate(check))
+            {
+                return true;
+            }
+            else
+            {
+                // invalid check digit
+                return false;
+            }
+        }
+        
+        int VINReader::transliterate(const char check) {
+            if (check == 'A' || check == 'J')
+            {
+                return 1;
+            }
+            else if (check == 'B' || check == 'K' || check == 'S')
+            {
+                return 2;
+            }
+            else if (check == 'C' || check == 'L' || check == 'T')
+            {
+                return 3;
+            }
+            else if (check == 'D' || check == 'M' || check == 'U')
+            {
+                return 4;
+            }
+            else if (check == 'E' || check == 'N' || check == 'V')
+            {
+                return 5;
+            }
+            else if (check == 'F' || check == 'W')
+            {
+                return 6;
+            }
+            else if (check == 'G' || check == 'P' || check == 'X')
+            {
+                return 7;
+            }
+            else if (check == 'H' || check == 'Y')
+            {
+                return 8;
+            }
+            else if (check == 'R' || check == L'Z')
+            {
+                return 9;
+            }
+            else if (isdigit(check))
+            {
+                return check - '0';
+            }
+            return -1;
+        }
+        
+        Ref<Result> VINReader::verifyVIN(Ref<Result> result) {
+            std::string text = result->getText()->getText();
+            
+            if (text.length() < 17) {
+                return Ref<Result>();
+            }
+            
+            if (text.length() == 18 && text[0] == 'I') {
+                text = text.substr(1);
+            }
+            
+            // validate vin
+            if (isValidVIN(text)) {
+                Ref<Result> newResult(new Result(
+                                                Ref<String>(new String(text)),
+                                                result->getRawBytes(),
+                                                result->getResultPoints(),
+                                                BarcodeFormat_VIN_CODE));
+                
+                return newResult;
+            }
+            
+            return Ref<Result>();
+        }
+    }
+}
+
 
 // file: zxing/oned/MultiFormatUPCEANReader.cpp
 

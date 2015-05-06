@@ -535,6 +535,7 @@ parentViewController:(UIViewController*)parentViewController
     if (format == zxing::BarcodeFormat_EAN_13)       return @"EAN_13";
     if (format == zxing::BarcodeFormat_CODE_128)     return @"CODE_128";
     if (format == zxing::BarcodeFormat_CODE_39)      return @"CODE_39";
+    if (format == zxing::BarcodeFormat_VIN_CODE)     return @"VIN_CODE";
     if (format == zxing::BarcodeFormat_ITF)          return @"ITF";
     return @"???";
 }
@@ -551,6 +552,7 @@ parentViewController:(UIViewController*)parentViewController
     if ([formatString isEqualToString: @"EAN_13"])		return zxing::BarcodeFormat_EAN_13;
     if ([formatString isEqualToString: @"CODE_128"])	return zxing::BarcodeFormat_CODE_128;
     if ([formatString isEqualToString: @"CODE_39"])		return zxing::BarcodeFormat_CODE_39;
+    if ([formatString isEqualToString: @"VIN_CODE"])    return zxing::BarcodeFormat_VIN_CODE;
     if ([formatString isEqualToString: @"ITF"])		    return zxing::BarcodeFormat_ITF;
     return zxing::BarcodeFormat_None;
 }
