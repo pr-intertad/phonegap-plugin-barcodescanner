@@ -143,6 +143,11 @@ final class CameraConfigurationManager {
     }
   }
 
+  boolean getTorch() {
+    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+    return prefs.getBoolean(PreferencesActivity.KEY_FRONT_LIGHT, false);
+  }
+
   private void initializeTorch(Camera.Parameters parameters, SharedPreferences prefs, boolean safeMode) {
     boolean currentSetting = prefs.getBoolean(PreferencesActivity.KEY_FRONT_LIGHT, false);
     doSetTorch(parameters, currentSetting, safeMode);
