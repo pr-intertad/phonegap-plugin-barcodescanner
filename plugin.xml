@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.itad.phonegap.plugins.barcodescanner"
-    version="0.0.7">
+    version="0.0.8">
 
     <name>BarcodeScanner</name>
     <description>You can use the BarcodeScanner plugin to scan different types of barcodes (using the device's camera) and get the metadata encoded in them for processing within your application.</description>
@@ -111,8 +111,13 @@
         <source-file src="src/android/LibraryProject/res/drawable/launcher_icon.png" target-dir="res/drawable"/>
         <source-file src="src/android/LibraryProject/res/drawable/share_via_barcode.png" target-dir="res/drawable"/>
         <source-file src="src/android/LibraryProject/res/drawable/shopper_icon.png" target-dir="res/drawable"/>
+        <source-file src="src/android/LibraryProject/res/drawable/torch_normal.png" target-dir="res/drawable"/>
+        <source-file src="src/android/LibraryProject/res/drawable/torch_selected.png" target-dir="res/drawable"/>
+        <source-file src="src/android/LibraryProject/res/drawable/torch_icon.xml" target-dir="res/drawable"/>
         <source-file src="src/android/LibraryProject/res/drawable-hdpi/launcher_icon.png" target-dir="res/drawable-hdpi"/>
         <source-file src="src/android/LibraryProject/res/drawable-hdpi/shopper_icon.png" target-dir="res/drawable-hdpi"/>
+        <source-file src="src/android/LibraryProject/res/drawable-hdpi/torch_normal.png" target-dir="res/drawable-hdpi"/>
+        <source-file src="src/android/LibraryProject/res/drawable-hdpi/torch_selected.png" target-dir="res/drawable-hdpi"/>
         <source-file src="src/android/LibraryProject/res/drawable-xhdpi/launcher_icon.png" target-dir="res/drawable-xhdpi"/>
         <source-file src="src/android/LibraryProject/res/drawable-xxhdpi/launcher_icon.png" target-dir="res/drawable-xxhdpi"/>
         <source-file src="src/android/LibraryProject/res/layout/bookmark_picker_list_item.xml" target-dir="res/layout"/>
