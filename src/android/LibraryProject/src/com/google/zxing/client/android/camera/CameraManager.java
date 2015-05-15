@@ -23,10 +23,12 @@ import android.hardware.Camera;
 import android.os.Handler;
 import android.util.Log;
 import android.view.SurfaceHolder;
+
 import com.google.zxing.PlanarYUVLuminanceSource;
 import com.google.zxing.client.android.camera.open.OpenCameraManager;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * This object wraps the Camera service object and expects to be the only one talking to it. The
@@ -167,6 +169,28 @@ public final class CameraManager {
    */
   public synchronized boolean getTorch() {
     return configManager.getTorch();
+  }
+
+  /**
+   * Convenience method for {@link com.google.zxing.client.android.CaptureActivity}
+   */
+  public boolean hasFlash() {
+    if (camera == null) {
+      return false;
+    }
+
+    Camera.Parameters parameters = camera.getParameters();
+
+    if (parameters.getFlashMode() == null) {
+      return false;
+    }
+
+    List<String> supportedFlashModes = parameters.getSupportedFlashModes();
+    if (supportedFlashModes == null || supportedFlashModes.isEmpty() || supportedFlashModes.size() == 1 && supportedFlashModes.get(0).equals(Camera.Parameters.FLASH_MODE_OFF)) {
+      return false;
+    }
+
+    return true;
   }
 
   /**

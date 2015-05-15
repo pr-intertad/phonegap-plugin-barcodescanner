@@ -756,7 +756,8 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     statusView.setText(fakeR.getId("string", "msg_default_status"));
     statusView.setVisibility(View.VISIBLE);
     viewfinderView.setVisibility(View.VISIBLE);
-    torchButton.setVisibility(View.VISIBLE);
+    torchButton.setVisibility(cameraManager.hasFlash() ?
+      View.VISIBLE : View.GONE);
     lastResult = null;
   }
 
