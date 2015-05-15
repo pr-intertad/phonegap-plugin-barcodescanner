@@ -77,6 +77,7 @@
 @property (nonatomic)         BOOL                        is2D;
 @property (nonatomic)         BOOL                        capturing;
 @property (nonatomic)         BOOL                        isFrontCamera;
+@property (nonatomic)         BOOL                        torchIsPresent;
 @property (nonatomic)         BOOL                        isFlashLightOn;
 @property (nonatomic)         BOOL                        isFlipped;
 
@@ -354,7 +355,7 @@ parentViewController:(UIViewController*)parentViewController
     AVCaptureDevice* __block device = nil;
     if (!self.isFrontCamera) {
         device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
-        if (!device) return;
+        if (!device || !device.hasFlash) return;
     }
     
     [device lockForConfiguration:nil];
@@ -376,10 +377,10 @@ parentViewController:(UIViewController*)parentViewController
     
     AVCaptureSession* captureSession = [[[AVCaptureSession alloc] init] autorelease];
     self.captureSession = captureSession;
+    self.torchIsPresent = NO;
     
        AVCaptureDevice* __block device = nil;
     if (self.isFrontCamera) {
-    
         NSArray* devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
         [devices enumerateObjectsUsingBlock:^(AVCaptureDevice *obj, NSUInteger idx, BOOL *stop) {
             if (obj.position == AVCaptureDevicePositionFront) {
@@ -389,8 +390,9 @@ parentViewController:(UIViewController*)parentViewController
     } else {
         device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
         if (!device) return @"unable to obtain video capture device";
-        
     }
+    
+    self.torchIsPresent = (device && device.hasFlash);
     
     NSLog(@"setUpCaptureSession");
     
@@ -925,7 +927,7 @@ parentViewController:(UIViewController*)parentViewController
     reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
 
     
-    if (!self.processor.isFrontCamera) {
+    if (self.processor.torchIsPresent) {
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         
         NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"]];
