@@ -94,7 +94,7 @@ final class CameraConfigurationManager {
 
     SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-    initializeTorch(parameters, prefs, safeMode);
+    //initializeTorch(parameters, prefs, safeMode);
 
     String focusMode = null;
     if (prefs.getBoolean(PreferencesActivity.KEY_AUTO_FOCUS, true)) {
@@ -141,11 +141,6 @@ final class CameraConfigurationManager {
       editor.putBoolean(PreferencesActivity.KEY_FRONT_LIGHT, newSetting);
       editor.commit();
     }
-  }
-
-  boolean getTorch() {
-    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
-    return prefs.getBoolean(PreferencesActivity.KEY_FRONT_LIGHT, false);
   }
 
   private void initializeTorch(Camera.Parameters parameters, SharedPreferences prefs, boolean safeMode) {

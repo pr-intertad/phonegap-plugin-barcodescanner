@@ -402,6 +402,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     if (!hasSurface) {
       hasSurface = true;
       initCamera(holder);
+
+      torchButton.setVisibility(cameraManager.hasFlash() ?
+              View.VISIBLE : View.GONE);
     }
   }
 
@@ -756,8 +759,6 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     statusView.setText(fakeR.getId("string", "msg_default_status"));
     statusView.setVisibility(View.VISIBLE);
     viewfinderView.setVisibility(View.VISIBLE);
-    torchButton.setVisibility(cameraManager.hasFlash() ?
-      View.VISIBLE : View.GONE);
     lastResult = null;
   }
 

@@ -167,8 +167,9 @@ public final class CameraManager {
   /**
    * Convenience method for {@link com.google.zxing.client.android.CaptureActivity}
    */
-  public synchronized boolean getTorch() {
-    return configManager.getTorch();
+  public boolean getTorch() {
+    Camera.Parameters parameters = camera.getParameters();
+    return !Camera.Parameters.FLASH_MODE_OFF.equals(parameters.getFlashMode());
   }
 
   /**
