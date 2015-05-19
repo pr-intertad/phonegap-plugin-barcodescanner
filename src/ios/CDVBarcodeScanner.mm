@@ -77,6 +77,8 @@
 @property (nonatomic)         BOOL                        is2D;
 @property (nonatomic)         BOOL                        capturing;
 @property (nonatomic)         BOOL                        isFrontCamera;
+@property (nonatomic)         BOOL                        torchIsPresent;
+@property (nonatomic)         BOOL                        isFlashLightOn;
 @property (nonatomic)         BOOL                        isFlipped;
 
 
@@ -344,16 +346,41 @@ parentViewController:(UIViewController*)parentViewController
     [self performSelector:@selector(scanBarcode) withObject:nil afterDelay:0.1];
 }
 
+- (void)toggleFlashlight
+{
+    if (self.isFrontCamera) {
+        return;
+    }
+    
+    AVCaptureDevice* __block device = nil;
+    if (!self.isFrontCamera) {
+        device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
+        if (!device || !device.hasFlash) return;
+    }
+    
+    [device lockForConfiguration:nil];
+    
+    // Set torch on/off
+    if (self.isFlashLightOn) {
+        [device setTorchModeOnWithLevel:0.5 error:nil];
+    } else {
+        [device setTorchMode:AVCaptureTorchModeOff];
+    }
+    
+    // Commit configuration
+    [device unlockForConfiguration];
+}
+
 //--------------------------------------------------------------------------
 - (NSString*)setUpCaptureSession {
     NSError* error = nil;
     
     AVCaptureSession* captureSession = [[[AVCaptureSession alloc] init] autorelease];
     self.captureSession = captureSession;
+    self.torchIsPresent = NO;
     
        AVCaptureDevice* __block device = nil;
     if (self.isFrontCamera) {
-    
         NSArray* devices = [AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo];
         [devices enumerateObjectsUsingBlock:^(AVCaptureDevice *obj, NSUInteger idx, BOOL *stop) {
             if (obj.position == AVCaptureDevicePositionFront) {
@@ -363,11 +390,11 @@ parentViewController:(UIViewController*)parentViewController
     } else {
         device = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
         if (!device) return @"unable to obtain video capture device";
-        
     }
     
+    self.torchIsPresent = (device && device.hasFlash);
+    
     NSLog(@"setUpCaptureSession");
-
     
     AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
     if (!input) return @"unable to obtain video capture device input";
@@ -747,10 +774,6 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)viewWillAppear:(BOOL)animated {
-    
-    // this fixes the bug when the statusbar is landscape, and the preview layer
-    // starts up in portrait (not filling the whole view)
-    //self.processor.previewLayer.frame = [[UIScreen mainScreen] bounds];
 
     //Get Preview Layer connection
     AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
@@ -772,7 +795,10 @@ parentViewController:(UIViewController*)parentViewController
     
     // this fixes the bug when the statusbar is landscape, and the preview layer
     // starts up in portrait (not filling the whole view)
+    
     self.processor.previewLayer.frame = self.view.bounds;
+
+    //self.processor.previewLayer.frame = [[UIScreen mainScreen] bounds];
 }
 
 //--------------------------------------------------------------------------
@@ -801,6 +827,13 @@ parentViewController:(UIViewController*)parentViewController
 - (void)flipCameraButtonPressed:(id)sender
 {
     [self.processor performSelector:@selector(flipCamera) withObject:nil afterDelay:0];
+}
+
+- (void)flashLightButtonPressed:(UIButton*)flashLightButton
+{
+    [flashLightButton setSelected: ![flashLightButton isSelected]];
+    [self.processor setIsFlashLightOn: [flashLightButton isSelected]];
+    [self.processor performSelector:@selector(toggleFlashlight) withObject:nil afterDelay:0];
 }
 
 //--------------------------------------------------------------------------
@@ -853,7 +886,6 @@ parentViewController:(UIViewController*)parentViewController
                        target:(id)self
                        action:@selector(flipCameraButtonPressed:)
                        ];
-
     
 #if USE_SHUTTER
     id shutterButton = [[UIBarButtonItem alloc]
@@ -893,6 +925,24 @@ parentViewController:(UIViewController*)parentViewController
     reticleView.opaque           = NO;
     reticleView.contentMode      = UIViewContentModeScaleToFill;
     reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
+
+    
+    if (self.processor.torchIsPresent) {
+        UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+        
+        NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"]];
+        
+        NSString *normalPath = [bundle pathForResource:@"Normal" ofType:@"png"];
+        NSString *selectedPath = [bundle pathForResource:@"Selected" ofType:@"png"];
+        
+        [button addTarget:self action:@selector(flashLightButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+        [button setBackgroundImage:[UIImage imageWithContentsOfFile:normalPath] forState:UIControlStateNormal];
+        [button setBackgroundImage:[UIImage imageWithContentsOfFile:selectedPath] forState:UIControlStateSelected];
+        
+        button.frame = CGRectMake(10, 10, 40, 40);
+        
+        [overlayView addSubview:button];
+    }
     
     [overlayView addSubview: reticleView];
     

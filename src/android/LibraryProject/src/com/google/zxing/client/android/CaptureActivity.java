@@ -16,20 +16,6 @@
 
 package com.google.zxing.client.android;
 
-import com.google.zxing.BarcodeFormat;
-import com.google.zxing.Result;
-import com.google.zxing.ResultMetadataType;
-import com.google.zxing.ResultPoint;
-import com.google.zxing.client.android.camera.CameraManager;
-import com.google.zxing.client.android.history.HistoryActivity;
-import com.google.zxing.client.android.history.HistoryItem;
-import com.google.zxing.client.android.history.HistoryManager;
-import com.google.zxing.client.android.result.ResultButtonListener;
-import com.google.zxing.client.android.result.ResultHandler;
-import com.google.zxing.client.android.result.ResultHandlerFactory;
-import com.google.zxing.client.android.result.supplement.SupplementalInfoRetriever;
-import com.google.zxing.client.android.share.ShareActivity;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
@@ -58,10 +44,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
+
+import com.google.zxing.BarcodeFormat;
 import com.google.zxing.FakeR;
+import com.google.zxing.Result;
+import com.google.zxing.ResultMetadataType;
+import com.google.zxing.ResultPoint;
+import com.google.zxing.client.android.camera.CameraManager;
+import com.google.zxing.client.android.history.HistoryActivity;
+import com.google.zxing.client.android.history.HistoryItem;
+import com.google.zxing.client.android.history.HistoryManager;
+import com.google.zxing.client.android.result.ResultButtonListener;
+import com.google.zxing.client.android.result.ResultHandler;
+import com.google.zxing.client.android.result.ResultHandlerFactory;
+import com.google.zxing.client.android.result.supplement.SupplementalInfoRetriever;
+import com.google.zxing.client.android.share.ShareActivity;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -111,6 +113,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
   private ViewfinderView viewfinderView;
   private TextView statusView;
   private View resultView;
+  private ToggleButton torchButton;
   private Result lastResult;
   private boolean hasSurface;
   private boolean copyToClipboard;
@@ -170,6 +173,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     viewfinderView = (ViewfinderView) findViewById(fakeR.getId("id", "viewfinder_view"));
     viewfinderView.setCameraManager(cameraManager);
 
+    torchButton = (ToggleButton)findViewById(fakeR.getId("id", "torch_button"));
     resultView = findViewById(fakeR.getId("id", "result_view"));
     statusView = (TextView) findViewById(fakeR.getId("id", "status_view"));
 
@@ -189,6 +193,16 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
       surfaceHolder.addCallback(this);
       surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
     }
+
+    torchButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+         @Override
+         public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+           if (b != cameraManager.getTorch()) {
+             cameraManager.setTorch(b);
+           }
+         }
+       }
+    );
 
     beepManager.updatePrefs();
 
@@ -310,9 +324,11 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
         return true;
       // Use volume up/down to turn on light
       case KeyEvent.KEYCODE_VOLUME_DOWN:
+        torchButton.setChecked(false);
         cameraManager.setTorch(false);
         return true;
       case KeyEvent.KEYCODE_VOLUME_UP:
+        torchButton.setChecked(true);
         cameraManager.setTorch(true);
         return true;
     }
@@ -386,6 +402,9 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     if (!hasSurface) {
       hasSurface = true;
       initCamera(holder);
+
+      torchButton.setVisibility(cameraManager.hasFlash() ?
+              View.VISIBLE : View.GONE);
     }
   }
 

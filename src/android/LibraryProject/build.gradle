@@ -73,10 +73,11 @@ android {
 
 android.libraryVariants.all { variant ->
     def name = variant.buildType.name
-    //if (name.equals(com.android.builder.BuilderConstants.DEBUG)) {
-    //    return; // Skip debug builds.
-    //}
+
     def task = project.tasks.create "jar${name.capitalize()}", Jar
+
+    task.archiveName = "com.google.zxing.client.android.captureactivity.jar"
+
     task.dependsOn variant.javaCompile
     //Include Java classes
     task.from variant.javaCompile.destinationDir
@@ -86,5 +87,10 @@ android.libraryVariants.all { variant ->
     }.collect {
         it.isDirectory() ? it : zipTree(it)
     }
+
+    if (name.equals(com.android.builder.core.BuilderConstants.RELEASE)) {
+        task.destinationDir = file(new File(rootProject.projectDir, '../'))
+    }
+
     artifacts.add('archives', task);
 }
