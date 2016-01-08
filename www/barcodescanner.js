@@ -98,7 +98,7 @@
             }
 
             var vinChecker = function(result) {
-                if (result != null && (result.format == 'CODE_39' || result.format == 'CODE_128')) {
+                if (result != null && (result.format == 'CODE_39' || result.format == 'CODE_128' || result.format == 'UPC_A' || result.format == 'UPC_E')) {
                     var text = result.text;
                     if (text != null && text.length == 18 && text[0] == 'I') {
                         text = text.substr(1);
