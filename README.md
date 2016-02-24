@@ -1,21 +1,46 @@
-BarcodeScanner
-==============
+# PhoneGap Plugin BarcodeScanner
+================================
+
+[![Build Status](https://travis-ci.org/phonegap/phonegap-plugin-barcodescanner.svg)](https://travis-ci.org/phonegap/phonegap-plugin-barcodescanner)
 
 Cross-platform BarcodeScanner for Cordova / PhoneGap.
 
-Follows the [Cordova Plugin spec](http://cordova.apache.org/docs/en/3.0.0/plugin_ref_spec.md), so that it works with [Plugman](https://github.com/apache/cordova-plugman).
+Follows the [Cordova Plugin spec](http://cordova.apache.org/docs/en/5.0.0/plugin_ref_spec.md), so that it works with [Plugman](https://github.com/apache/cordova-plugman).
+
+## Installation
+
+    
+This requires phonegap 5.0+ ( current stable v3.0.0 )
+
+    phonegap plugin add phonegap-plugin-barcodescanner
+
+Older versions of phonegap can still install via the __deprecated__ id ( stale v2.0.1 )
+
+    phonegap plugin add com.phonegap.plugins.barcodescanner
+
+It is also possible to install via repo url directly ( unstable )
+
+    phonegap plugin add https://github.com/phonegap/phonegap-plugin-barcodescanner.git
 
 ### Supported Platforms
 
 - Android
 - iOS
-- Windows 8
+- Windows (Windows/Windows Phone 8.1 and Windows 10)
 - Windows Phone 8
+- BlackBerry 10
+- Browser
 
 Note: the Android source for this project includes an Android Library Project.
 plugman currently doesn't support Library Project refs, so its been
 prebuilt as a jar library. Any updates to the Library Project should be
 committed with an updated jar.
+
+Note: Windows 10 applications can not be build for `AnyCPU` architecture, which is default for Windows platform. If you want to build/run Windows 10 app, you should specify target architecture explicitly, for example (Cordova CLI):
+
+```
+cordova run windows -- --archs=x86
+```
 
 ## Using the plugin ##
 The plugin creates the object `cordova/plugin/BarcodeScanner` with the method `scan(success, fail)`. 
@@ -50,7 +75,7 @@ The following barcode types are currently supported:
 * CODE_39
 * ITF
 
-### Windows8
+### Windows
 
 * UPC_A
 * UPC_E
@@ -85,6 +110,17 @@ The following barcode types are currently supported:
 * DATA_MATRIX
 * AZTEC
 * PDF417
+
+### BlackBerry 10
+* UPC_A
+* UPC_E
+* EAN_8
+* EAN_13
+* CODE_39
+* CODE_128
+* ITF
+* DATA_MATRIX
+* AZTEC
 
 `success` and `fail` are callback functions. Success is passed an object with data, type and cancelled properties. Data is the text representation of the barcode data, type is the type of barcode detected and cancelled is whether or not the user cancelled the scan.
 
@@ -125,16 +161,20 @@ A full example could be:
         );
 ```
 
-## Windows8 quirks ##
-Windows 8 implenemtation currently doesn't support encode functionality.
+## Windows quirks ##
+Windows implementation currently doesn't support encode functionality.
 
 ## Windows Phone 8 quirks ##
-Windows Phone 8 implenemtation currently doesn't support encode functionality.
+Windows Phone 8 implementation currently doesn't support encode functionality.
+
+## BlackBerry 10 quirks
+BlackBerry 10 implementation currently doesn't support encode functionality.
+Cancelling a scan on BlackBerry 10 is done by touching the screen.
 
 ## Thanks on Github ##
 
-So many -- check out the original [iOS](https://github.com/phonegap/phonegap-plugins/tree/DEPRECATED/iOS/BarcodeScanner) and [Android](https://github.com/phonegap/phonegap-plugins/tree/DEPRECATED/Android/BarcodeScanner) repos.
-
+So many -- check out the original [iOS](https://github.com/phonegap/phonegap-plugins/tree/DEPRECATED/iOS/BarcodeScanner),  [Android](https://github.com/phonegap/phonegap-plugins/tree/DEPRECATED/Android/BarcodeScanner) and 
+[BlackBerry 10](https://github.com/blackberry/WebWorks-Community-APIs/tree/master/BB10-Cordova/BarcodeScanner) repos.
 
 ## Licence ##
 

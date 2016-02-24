@@ -69,10 +69,7 @@
 @property (nonatomic, retain) AVCaptureSession*           captureSession;
 @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
 @property (nonatomic, retain) NSString*                   alternateXib;
-@property (nonatomic, retain) NSString*                   formats;
-@property (nonatomic)         double                      scanHeight;
-@property (nonatomic)         double                      scanWidth;
-@property (nonatomic)         AVCaptureVideoOrientation   captureOrientation;
+@property (nonatomic, retain) NSMutableArray*             results;
 @property (nonatomic)         BOOL                        is1D;
 @property (nonatomic)         BOOL                        is2D;
 @property (nonatomic)         BOOL                        capturing;
@@ -163,9 +160,6 @@
                  parentViewController:self.viewController
                  config:config
                  ];
-    [processor retain];
-    [processor retain];
-    [processor retain];
     // queue [processor scanBarcode] to run on the event loop
     [processor performSelector:@selector(scanBarcode) withObject:nil afterDelay:0];
 }
@@ -224,6 +218,7 @@
 @synthesize is1D                 = _is1D;
 @synthesize is2D                 = _is2D;
 @synthesize capturing            = _capturing;
+@synthesize results              = _results;
 
 //--------------------------------------------------------------------------
 - (id)initWithPlugin:(CDVBarcodeScanner*)plugin
@@ -256,6 +251,7 @@ parentViewController:(UIViewController*)parentViewController
     self.is1D      = YES;
     self.is2D      = YES;
     self.capturing = NO;
+    self.results = [NSMutableArray new];
     
     return self;
 }
@@ -269,6 +265,7 @@ parentViewController:(UIViewController*)parentViewController
     self.captureSession = nil;
     self.previewLayer = nil;
     self.alternateXib = nil;
+    self.results = nil;
     
     self.capturing = NO;
     
@@ -314,6 +311,37 @@ parentViewController:(UIViewController*)parentViewController
     
     // delayed [self release];
     [self performSelector:@selector(release) withObject:nil afterDelay:1];
+}
+
+//--------------------------------------------------------------------------
+- (BOOL)checkResult:(NSString *)result {
+    [self.results addObject:result];
+    
+    NSInteger treshold = 7;
+    
+    if (self.results.count > treshold) {
+        [self.results removeObjectAtIndex:0];
+    }
+    
+    if (self.results.count < treshold)
+    {
+        return NO;
+    }
+    
+    BOOL allEqual = YES;
+    NSString *compareString = [self.results objectAtIndex:0];
+    
+    for (NSString *aResult in self.results)
+    {
+        if (![compareString isEqualToString:aResult])
+        {
+            allEqual = NO;
+            //NSLog(@"Did not fit: %@",self.results);
+            break;
+        }
+    }
+    
+    return allEqual;
 }
 
 //--------------------------------------------------------------------------
@@ -412,11 +440,11 @@ parentViewController:(UIViewController*)parentViewController
     
     [output setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
     
-    if (![captureSession canSetSessionPreset:AVCaptureSessionPresetMedium]) {
-        return @"unable to preset medium quality video capture";
+    if (![captureSession canSetSessionPreset:AVCaptureSessionPresetHigh]) {
+        return @"unable to preset high quality video capture";
     }
     
-    captureSession.sessionPreset = AVCaptureSessionPresetMedium;
+    captureSession.sessionPreset = AVCaptureSessionPresetHigh;
     
     if ([captureSession canAddInput:input]) {
         [captureSession addInput:input];
@@ -525,7 +553,11 @@ parentViewController:(UIViewController*)parentViewController
         const char* cString      = resultText->getText().c_str();
         NSString*   resultString = [[[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding] autorelease];
         
-        [self barcodeScanSucceeded:resultString format:format];
+        if ([self checkResult:resultString]) {
+            [self barcodeScanSucceeded:resultString format:format];
+        }
+        
+        
         
     }
     catch (zxing::ReaderException &rex) {
@@ -751,7 +783,7 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 - (void)dealloc {
     self.view = nil;
-//    self.processor = nil;
+    self.processor = nil;
     self.shutterPressed = NO;
     self.alternateXib = nil;
     self.overlayView = nil;      
