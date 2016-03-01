@@ -95,7 +95,7 @@ BarcodeScanner.prototype.scan = function (successCallback, errorCallback, config
         console.log("BarcodeScanner.scan failure: success callback parameter must be a function");
         return;
     }
-
+    
     exec(successCallback, errorCallback, 'BarcodeScanner', 'scan', config);
 };
 
