@@ -69,6 +69,10 @@
 @property (nonatomic, retain) AVCaptureSession*           captureSession;
 @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
 @property (nonatomic, retain) NSString*                   alternateXib;
+@property (nonatomic, retain) NSString*                   formats;
+@property (nonatomic)         double                      scanHeight;
+@property (nonatomic)         double                      scanWidth;
+@property (nonatomic)         AVCaptureVideoOrientation   captureOrientation;
 @property (nonatomic, retain) NSMutableArray*             results;
 @property (nonatomic)         BOOL                        is1D;
 @property (nonatomic)         BOOL                        is2D;
