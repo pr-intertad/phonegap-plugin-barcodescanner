@@ -164,6 +164,11 @@
                  parentViewController:self.viewController
                  config:config
                  ];
+    
+    [processor retain];
+    [processor retain];
+    [processor retain];
+    
     // queue [processor scanBarcode] to run on the event loop
     [processor performSelector:@selector(scanBarcode) withObject:nil afterDelay:0];
 }
