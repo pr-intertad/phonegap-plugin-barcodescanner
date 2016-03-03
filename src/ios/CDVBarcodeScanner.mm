@@ -627,16 +627,16 @@ parentViewController:(UIViewController*)parentViewController
     }
     
     size_t offsetX = (width  - greyWidth) / 2;
-    size_t offsetY = (height - greyWidth) / 2;
+    size_t offsetY = (height - greyHeight) / 2;
     
     // pixel-by-pixel ...
-    for (size_t i=0; i<greyWidth; i++) {
+    for (size_t i=0; i<greyHeight; i++) {
         for (size_t j=0; j<greyWidth; j++) {
             // i,j are the coordinates from the sample buffer
             // ni, nj are the coordinates in the LuminanceSource
             // in this case, there's a rotation taking place
-            size_t ni = greyWidth-j;
-            size_t nj = i;
+            size_t ni = i;
+            size_t nj = j;
             
             size_t baseOffset = (j+offsetY)*bytesPerRow + (i + offsetX)*4;
             
@@ -655,7 +655,7 @@ parentViewController:(UIViewController*)parentViewController
     using namespace zxing;
     
     Ref<LuminanceSource> luminanceSource (
-                                          new GreyscaleLuminanceSource(greyData, (int)greyWidth, (int)greyWidth, 0, 0, (int)greyWidth, (int)greyWidth)
+                                          new GreyscaleLuminanceSource(greyData, (int)greyWidth, (int)greyHeight, 0, 0, (int)greyWidth, (int)greyHeight)
                                           );
     
     return luminanceSource;
