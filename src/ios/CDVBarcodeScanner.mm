@@ -63,6 +63,9 @@
 @property (nonatomic, retain) AVCaptureSession*           captureSession;
 @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
 @property (nonatomic, retain) NSString*                   alternateXib;
+@property (nonatomic, retain) NSString*                   formats;
+@property (nonatomic)         double                      scanHeight;
+@property (nonatomic)         double                      scanWidth;
 @property (nonatomic, retain) NSMutableArray*             results;
 @property (nonatomic)         BOOL                        is1D;
 @property (nonatomic)         BOOL                        is2D;
@@ -113,7 +116,7 @@
 - (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib;
 - (void)startCapturing;
 - (UIView*)buildOverlayView;
-- (UIImage*)buildReticleImage;
+- (UIImage*)buildReticleImage: (CGRect) rectArea;
 - (void)shutterButtonPressed;
 - (IBAction)cancelButtonPressed:(id)sender;
 
@@ -262,12 +265,20 @@ parentViewController:(UIViewController*)parentViewController
     self.callback             = callback;
     self.parentViewController = parentViewController;
     if (config != nil) {
-//        self.alternateXib         = [config objectForKey:CONFIG_XIB];
-//        self.formats              = [config objectForKey: CONFIG_FORMAT];
-//        self.scanHeight           = [[config objectForKey: CONFIG_HEIGHT] doubleValue];
-//        self.scanWidth            = [[config objectForKey: CONFIG_WIDTH] doubleValue];
+        self.alternateXib         = [config objectForKey:CONFIG_XIB];
+        self.formats              = [config objectForKey: CONFIG_FORMAT];
+        self.scanHeight           = [[config objectForKey: CONFIG_HEIGHT] doubleValue];
+        self.scanWidth            = [[config objectForKey: CONFIG_WIDTH] doubleValue];
     }
-
+    
+    if (self.scanHeight <= 0 || self.scanHeight > 1)
+    {
+        self.scanHeight = -1;
+    }
+    if (self.scanWidth <= 0 || self.scanWidth > 1)
+    {
+        self.scanWidth = -1;
+    }
     
     self.is1D      = YES;
     self.is2D      = YES;
@@ -593,8 +604,12 @@ parentViewController:(UIViewController*)parentViewController
     uint8_t* baseAddress = (uint8_t*) CVPixelBufferGetBaseAddress(imageBuffer);
     
     // only going to get 90% of the min(width,height) of the captured image
-    size_t    greyWidth  = 9 * MIN(width, height) / 10;
-    uint8_t*  greyData   = (uint8_t*) malloc(greyWidth * greyWidth);
+    // only going to get 40% of the height of the captured image
+    size_t    greyWidth  = (self.scanWidth == -1) ? minAxis*DEFAULT_SCALE : self.scanWidth * width;
+    size_t    greyHeight  = (self.scanHeight == -1) ? minAxis*DEFAULT_SCALE: self.scanHeight * height;
+    
+    
+    uint8_t*  greyData   = (uint8_t*) malloc(greyWidth * greyHeight);
     
     // remember this pointer so we can free it later
     *ptr = greyData;
@@ -957,7 +972,14 @@ parentViewController:(UIViewController*)parentViewController
     
     [overlayView addSubview: toolbar];
     
-    UIImage* reticleImage = [self buildReticleImage];
+    rectArea = CGRectMake(
+                          0,
+                          0,
+                          rootViewHeight,
+                          rootViewWidth
+                          );
+    
+    UIImage* reticleImage = [self buildReticleImage:rectArea];
     UIView* reticleView = [[UIImageView alloc] initWithImage: reticleImage];
     CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
     
@@ -994,19 +1016,35 @@ parentViewController:(UIViewController*)parentViewController
 //-------------------------------------------------------------------------
 // builds the green box and red line
 //-------------------------------------------------------------------------
-- (UIImage*)buildReticleImage {
+- (UIImage*)buildReticleImage: (CGRect) rectArea {
     UIImage* result;
-    UIGraphicsBeginImageContext(CGSizeMake(RETICLE_SIZE, RETICLE_SIZE));
+    UIGraphicsBeginImageContext(rectArea.size);
     CGContextRef context = UIGraphicsGetCurrentContext();
     
+    size_t minAxis = MIN(rectArea.size.height, rectArea.size.width);
+    
+    size_t height = (self.processor.scanHeight == -1) ?
+    minAxis*DEFAULT_SCALE
+    : rectArea.size.height*self.processor.scanHeight;
+    
+    size_t width = (self.processor.scanWidth == -1) ?
+    minAxis*DEFAULT_SCALE
+    : rectArea.size.width*self.processor.scanWidth;
+    
+    size_t x0 = (rectArea.size.width-width)/2;
+    size_t y0 = (rectArea.size.height-height)/2;
+    
+    size_t x1 = x0 + width;
+    
     if (self.processor.is1D) {
+        size_t y = y0 + height/2;
+        
         UIColor* color = [UIColor colorWithRed:1.0 green:0.0 blue:0.0 alpha:RETICLE_ALPHA];
         CGContextSetStrokeColorWithColor(context, color.CGColor);
         CGContextSetLineWidth(context, RETICLE_WIDTH);
         CGContextBeginPath(context);
-        CGFloat lineOffset = RETICLE_OFFSET+(0.5*RETICLE_WIDTH);
-        CGContextMoveToPoint(context, lineOffset, RETICLE_SIZE/2);
-        CGContextAddLineToPoint(context, RETICLE_SIZE-lineOffset, 0.5*RETICLE_SIZE);
+        CGContextMoveToPoint(context, x0+0.5*RETICLE_WIDTH, y);
+        CGContextAddLineToPoint(context, x1, y);
         CGContextStrokePath(context);
     }
     
@@ -1016,10 +1054,10 @@ parentViewController:(UIViewController*)parentViewController
         CGContextSetLineWidth(context, RETICLE_WIDTH);
         CGContextStrokeRect(context,
                             CGRectMake(
-                                       RETICLE_OFFSET,
-                                       RETICLE_OFFSET,
-                                       RETICLE_SIZE-2*RETICLE_OFFSET,
-                                       RETICLE_SIZE-2*RETICLE_OFFSET
+                                       x0,
+                                       y0,
+                                       width,
+                                       height
                                        )
                             );
     }
