@@ -71,7 +71,7 @@
 @property (nonatomic)         BOOL                        isFlipped;
 
 
-- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController alterateOverlayXib:(NSString *)alternateXib;
+- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController config:(NSDictionary *)config;
 - (void)scanBarcode;
 - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format;
 - (void)barcodeScanFailed:(NSString*)message;
@@ -145,10 +145,11 @@
     callback = command.callbackId;
     
     // We allow the user to define an alternate xib file for loading the overlay.
-    NSString *overlayXib = nil;
+    NSDictionary *config = nil;
+    
     if ( [command.arguments count] >= 1 )
     {
-        overlayXib = [command.arguments objectAtIndex:0];
+        config = [command.arguments objectAtIndex:0];
     }
     
     capabilityError = [self isScanNotPossible];
@@ -161,7 +162,7 @@
                  initWithPlugin:self
                  callback:callback
                  parentViewController:self.viewController
-                 alterateOverlayXib:overlayXib
+                 config:config
                  ];
     // queue [processor scanBarcode] to run on the event loop
     [processor performSelector:@selector(scanBarcode) withObject:nil afterDelay:0];
@@ -253,14 +254,20 @@ SystemSoundID _soundFileObject;
 - (id)initWithPlugin:(CDVBarcodeScanner*)plugin
             callback:(NSString*)callback
 parentViewController:(UIViewController*)parentViewController
-  alterateOverlayXib:(NSString *)alternateXib {
+              config:(NSDictionary *)config {
     self = [super init];
     if (!self) return self;
     
     self.plugin               = plugin;
     self.callback             = callback;
     self.parentViewController = parentViewController;
-    self.alternateXib         = alternateXib;
+    if (config != nil) {
+//        self.alternateXib         = [config objectForKey:CONFIG_XIB];
+//        self.formats              = [config objectForKey: CONFIG_FORMAT];
+//        self.scanHeight           = [[config objectForKey: CONFIG_HEIGHT] doubleValue];
+//        self.scanWidth            = [[config objectForKey: CONFIG_WIDTH] doubleValue];
+    }
+
     
     self.is1D      = YES;
     self.is2D      = YES;
