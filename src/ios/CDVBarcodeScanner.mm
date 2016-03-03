@@ -35,6 +35,12 @@
 // only performing a scan when you click the shutter button.  For testing.
 //------------------------------------------------------------------------------
 #define USE_SHUTTER 0
+#define CONFIG_XIB      @"alternateXib"
+#define CONFIG_FORMAT   @"format"
+#define CONFIG_WIDTH    @"width"
+#define CONFIG_HEIGHT   @"height"
+
+#define DEFAULT_SCALE 0.7
 
 //------------------------------------------------------------------------------
 @class CDVbcsProcessor;
@@ -603,6 +609,7 @@ parentViewController:(UIViewController*)parentViewController
     size_t   height      =            CVPixelBufferGetHeight(imageBuffer);
     uint8_t* baseAddress = (uint8_t*) CVPixelBufferGetBaseAddress(imageBuffer);
     
+    size_t minAxis = MIN(width, height);
     // only going to get 90% of the min(width,height) of the captured image
     // only going to get 40% of the height of the captured image
     size_t    greyWidth  = (self.scanWidth == -1) ? minAxis*DEFAULT_SCALE : self.scanWidth * width;
