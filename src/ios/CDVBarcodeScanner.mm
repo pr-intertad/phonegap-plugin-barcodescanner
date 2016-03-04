@@ -997,7 +997,7 @@ parentViewController:(UIViewController*)parentViewController
     reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
     
     
-    if (self.processor.torchIsPresent) {
+    if (false) {
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         
         NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"]];
