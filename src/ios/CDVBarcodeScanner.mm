@@ -174,7 +174,7 @@
                  config:config
                  ];
     // queue [processor scanBarcode] to run on the event loop
-    [processor performSelector:@selector(scanBarcode) withObject:nil afterDelay:0];
+    //[processor performSelector:@selector(scanBarcode) withObject:nil afterDelay:0];
 }
 
 //--------------------------------------------------------------------------
