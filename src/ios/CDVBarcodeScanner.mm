@@ -930,32 +930,32 @@ parentViewController:(UIViewController*)parentViewController
     CGRect bounds = self.view.bounds;
     bounds = CGRectMake(0, 0, bounds.size.width, bounds.size.height);
     
-    UIView* overlayView = [[UIView alloc] initWithFrame:bounds];
+    UIView* overlayView = [[[UIView alloc] initWithFrame:bounds] autorelease];
     overlayView.autoresizesSubviews = YES;
     overlayView.autoresizingMask    = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     overlayView.opaque              = NO;
-
-    UIToolbar* toolbar = [[UIToolbar alloc] init];
+    
+    UIToolbar* toolbar = [[[UIToolbar alloc] init] autorelease];
     toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin;
     
-    id cancelButton = [[UIBarButtonItem alloc]
+    id cancelButton = [[[UIBarButtonItem alloc] autorelease]
                        initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                        target:(id)self
                        action:@selector(cancelButtonPressed:)
                        ];
     
     
-    id flexSpace = [[UIBarButtonItem alloc]
+    id flexSpace = [[[UIBarButtonItem alloc] autorelease]
                     initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace
                     target:nil
                     action:nil
                     ];
     
-    id flipCamera = [[UIBarButtonItem alloc]
-                       initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
-                       target:(id)self
-                       action:@selector(flipCameraButtonPressed:)
-                       ];
+    id flipCamera = [[[UIBarButtonItem alloc] autorelease]
+                     initWithBarButtonSystemItem:UIBarButtonSystemItemCamera
+                     target:(id)self
+                     action:@selector(flipCameraButtonPressed:)
+                     ];
     
 #if USE_SHUTTER
     id shutterButton = [[UIBarButtonItem alloc]
@@ -986,31 +986,38 @@ parentViewController:(UIViewController*)parentViewController
                           rootViewWidth
                           );
     
-//    UIImage* reticleImage = [self buildReticleImage:rectArea];
-//    UIView* reticleView = [[UIImageView alloc] initWithImage: reticleImage];
-//    CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
-//    
-//    rectArea = CGRectMake(
-//                          0.5 * (rootViewWidth  - minAxis),
-//                          0.5 * (rootViewHeight - minAxis),
-//                          minAxis,
-//                          minAxis
-//                          );
-//    
-//    [reticleView setFrame:rectArea];
-//    
-//    reticleView.opaque           = NO;
-//    reticleView.contentMode      = UIViewContentModeScaleAspectFit;
-//    reticleView.autoresizingMask = 0
-//    | UIViewAutoresizingFlexibleLeftMargin
-//    | UIViewAutoresizingFlexibleRightMargin
-//    | UIViewAutoresizingFlexibleTopMargin
-//    | UIViewAutoresizingFlexibleBottomMargin
-//    ;
-//    
-//    [overlayView addSubview: reticleView];
+    UIImage* reticleImage = [self buildReticleImage: rectArea];
+    UIView* reticleView = [[[UIImageView alloc] initWithImage: reticleImage] autorelease];
+    
+    
+    [reticleView setFrame:overlayView.bounds];
+    
+    reticleView.opaque           = NO;
+    reticleView.contentMode      = UIViewContentModeScaleToFill;
+    reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
+    
+    
+    if (self.processor.torchIsPresent) {
+        UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
+        
+        NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"]];
+        
+        NSString *normalPath = [bundle pathForResource:@"Normal" ofType:@"png"];
+        NSString *selectedPath = [bundle pathForResource:@"Selected" ofType:@"png"];
+        
+        [button addTarget:self action:@selector(flashLightButtonPressed:) forControlEvents:UIControlEventTouchUpInside];
+        [button setBackgroundImage:[UIImage imageWithContentsOfFile:normalPath] forState:UIControlStateNormal];
+        [button setBackgroundImage:[UIImage imageWithContentsOfFile:selectedPath] forState:UIControlStateSelected];
+        
+        button.frame = CGRectMake(10, 10, 40, 40);
+        
+        [overlayView addSubview:button];
+    }
+    
+    [overlayView addSubview: reticleView];
     
     return overlayView;
+
 }
 
 //--------------------------------------------------------------------------
