@@ -332,7 +332,7 @@ parentViewController:(UIViewController*)parentViewController
     self.viewController.orientationDelegate = self.plugin.viewController;
     
     // delayed [self openDialog];
-    //[self performSelector:@selector(openDialog) withObject:nil afterDelay:1];
+    [self performSelector:@selector(openDialog) withObject:nil afterDelay:1];
 }
 
 //--------------------------------------------------------------------------
@@ -986,29 +986,29 @@ parentViewController:(UIViewController*)parentViewController
                           rootViewWidth
                           );
     
-    UIImage* reticleImage = [self buildReticleImage:rectArea];
-    UIView* reticleView = [[UIImageView alloc] initWithImage: reticleImage];
-    CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
-    
-    rectArea = CGRectMake(
-                          0.5 * (rootViewWidth  - minAxis),
-                          0.5 * (rootViewHeight - minAxis),
-                          minAxis,
-                          minAxis
-                          );
-    
-    [reticleView setFrame:rectArea];
-    
-    reticleView.opaque           = NO;
-    reticleView.contentMode      = UIViewContentModeScaleAspectFit;
-    reticleView.autoresizingMask = 0
-    | UIViewAutoresizingFlexibleLeftMargin
-    | UIViewAutoresizingFlexibleRightMargin
-    | UIViewAutoresizingFlexibleTopMargin
-    | UIViewAutoresizingFlexibleBottomMargin
-    ;
-    
-    [overlayView addSubview: reticleView];
+//    UIImage* reticleImage = [self buildReticleImage:rectArea];
+//    UIView* reticleView = [[UIImageView alloc] initWithImage: reticleImage];
+//    CGFloat minAxis = MIN(rootViewHeight, rootViewWidth);
+//    
+//    rectArea = CGRectMake(
+//                          0.5 * (rootViewWidth  - minAxis),
+//                          0.5 * (rootViewHeight - minAxis),
+//                          minAxis,
+//                          minAxis
+//                          );
+//    
+//    [reticleView setFrame:rectArea];
+//    
+//    reticleView.opaque           = NO;
+//    reticleView.contentMode      = UIViewContentModeScaleAspectFit;
+//    reticleView.autoresizingMask = 0
+//    | UIViewAutoresizingFlexibleLeftMargin
+//    | UIViewAutoresizingFlexibleRightMargin
+//    | UIViewAutoresizingFlexibleTopMargin
+//    | UIViewAutoresizingFlexibleBottomMargin
+//    ;
+//    
+//    [overlayView addSubview: reticleView];
     
     return overlayView;
 }
@@ -1016,9 +1016,11 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 
 #define RETICLE_SIZE    500.0f
-#define RETICLE_WIDTH    10.0f
-#define RETICLE_OFFSET   60.0f
+#define RETICLE_WIDTH     3.0f
+#define RETICLE_OFFSET_X  0.0f
+#define RETICLE_OFFSET_Y  0.0f
 #define RETICLE_ALPHA     0.4f
+#define RETICLE_PADDING  10.0f
 
 //-------------------------------------------------------------------------
 // builds the green box and red line
