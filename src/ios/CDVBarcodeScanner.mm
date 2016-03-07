@@ -228,7 +228,7 @@
                                resultWithStatus: CDVCommandStatus_OK
                                messageAsDictionary: resultDict
                                ];
-    [self.commandDelegate sendPluginResult:result callbackId:callback];
+   //[self.commandDelegate sendPluginResult:result callbackId:callback];
 }
 
 //--------------------------------------------------------------------------
@@ -238,7 +238,7 @@
                                messageAsString: message
                                ];
     
-    [self.commandDelegate sendPluginResult:result callbackId:callback];
+     //[self.commandDelegate sendPluginResult:result callbackId:callback];
 }
 
 @end
@@ -294,8 +294,8 @@ parentViewController:(UIViewController*)parentViewController
     self.capturing = NO;
     self.results = [NSMutableArray new];
     
-    CFURLRef soundFileURLRef  = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("CDVBarcodeScanner.bundle/beep"), CFSTR ("caf"), NULL);
-    AudioServicesCreateSystemSoundID(soundFileURLRef, &_soundFileObject);
+    //CFURLRef soundFileURLRef  = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("CDVBarcodeScanner.bundle/beep"), CFSTR ("caf"), NULL);
+    //AudioServicesCreateSystemSoundID(soundFileURLRef, &_soundFileObject);
     
     return self;
 }
@@ -330,7 +330,7 @@ parentViewController:(UIViewController*)parentViewController
         return;
     }
     
-    self.viewController = [[CDVbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib];
+    self.viewController = [[[CDVbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib] autorelease];
     // here we set the orientation delegate to the MainViewController of the app (orientation controlled in the Project Settings)
     self.viewController.orientationDelegate = self.plugin.viewController;
     
