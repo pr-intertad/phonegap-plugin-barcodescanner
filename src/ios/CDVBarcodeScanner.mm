@@ -553,7 +553,7 @@ parentViewController:(UIViewController*)parentViewController
         
         
         const char* cString      = resultText->getText().c_str();
-        NSString*   resultString = [[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding];
+        NSString*   resultString = [[[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding] autorelease];
         
         if ([self checkResult:resultString]) {
             [self barcodeScanSucceeded:resultString format:format];
@@ -650,7 +650,7 @@ parentViewController:(UIViewController*)parentViewController
             0.59 * baseAddress[baseOffset + 1] +
             0.30 * baseAddress[baseOffset + 2];
             
-            greyData[nj*greyWidth + ni] = value;
+            greyData[ni*greyWidth + nj] = value;
         }
     }
     
