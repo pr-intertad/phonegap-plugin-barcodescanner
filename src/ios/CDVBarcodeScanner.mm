@@ -390,11 +390,11 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format {
-    dispatch_sync(dispatch_get_main_queue(), ^{
-        [self barcodeScanDone];
-        AudioServicesPlaySystemSound(_soundFileObject);
+    //dispatch_sync(dispatch_get_main_queue(), ^{
+    //    [self barcodeScanDone];
+    //    AudioServicesPlaySystemSound(_soundFileObject);
         [self.plugin returnSuccess:text format:format cancelled:FALSE flipped:FALSE callback:self.callback];
-    });
+    //});
 }
 
 //--------------------------------------------------------------------------
@@ -425,8 +425,9 @@ parentViewController:(UIViewController*)parentViewController
 - (NSString*)setUpCaptureSession {
     NSError* error = nil;
     
-    AVCaptureSession* captureSession = [[AVCaptureSession alloc] init];
+    AVCaptureSession* captureSession = [[[AVCaptureSession alloc] init] autorelease];
     self.captureSession = captureSession;
+    
     
     AVCaptureDevice* __block device = nil;
     if (self.isFrontCamera) {
@@ -447,7 +448,7 @@ parentViewController:(UIViewController*)parentViewController
     AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
     if (!input) return @"unable to obtain video capture device input";
     
-    AVCaptureVideoDataOutput* output = [[AVCaptureVideoDataOutput alloc] init];
+    AVCaptureVideoDataOutput* output = [[[AVCaptureVideoDataOutput alloc] init] autorelease];
     if (!output) return @"unable to obtain video capture output";
     
     NSDictionary* videoOutputSettings = [NSDictionary
