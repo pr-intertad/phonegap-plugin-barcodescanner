@@ -501,7 +501,7 @@ parentViewController:(UIViewController*)parentViewController
     if (!self.viewController.shutterPressed) return;
     self.viewController.shutterPressed = NO;
     
-    UIView* flashView = [[UIView alloc] initWithFrame:self.viewController.view.frame];
+    UIView* flashView = [[[UIView alloc] initWithFrame:self.viewController.view.frame] autorelease];
     [flashView setBackgroundColor:[UIColor whiteColor]];
     [self.viewController.view.window addSubview:flashView];
     
@@ -555,9 +555,9 @@ parentViewController:(UIViewController*)parentViewController
         const char* cString      = resultText->getText().c_str();
         NSString*   resultString = [[[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding] autorelease];
         
-        if ([self checkResult:resultString]) {
-            [self barcodeScanSucceeded:resultString format:format];
-        }
+//        if ([self checkResult:resultString]) {
+//            [self barcodeScanSucceeded:resultString format:format];
+//        }
         
         
         
@@ -642,7 +642,7 @@ parentViewController:(UIViewController*)parentViewController
             size_t ni = i;
             size_t nj = j;
             
-            size_t baseOffset = (j+offsetY)*bytesPerRow + (i + offsetX)*4;
+            size_t baseOffset = (i+offsetY)*bytesPerRow + (j + offsetX)*4;
             
             // convert from color to grayscale
             // http://en.wikipedia.org/wiki/Grayscale#Converting_color_to_grayscale
@@ -856,16 +856,16 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)loadView {
-    self.view = [[UIView alloc] initWithFrame: self.processor.parentViewController.view.frame];
+    self.view = [[[UIView alloc] initWithFrame: self.processor.parentViewController.view.frame] autorelease];
     
     // setup capture preview layer
     AVCaptureVideoPreviewLayer* previewLayer = self.processor.previewLayer;
     previewLayer.frame = self.view.bounds;
     previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     
-    if ([previewLayer.connection isVideoOrientationSupported]) {
-        [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
-    }
+    //if ([previewLayer.connection isVideoOrientationSupported]) {
+    //    [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
+    //}
     
     [self.view.layer insertSublayer:previewLayer below:[[self.view.layer sublayers] objectAtIndex:0]];
     
