@@ -72,6 +72,7 @@
 @property (nonatomic, retain) NSString*                   formats;
 @property (nonatomic)         double                      scanHeight;
 @property (nonatomic)         double                      scanWidth;
+@property (nonatomic)         AVCaptureVideoOrientation   captureOrientation;
 @property (nonatomic, retain) NSMutableArray*             results;
 @property (nonatomic)         BOOL                        is1D;
 @property (nonatomic)         BOOL                        is2D;
@@ -228,7 +229,7 @@
                                resultWithStatus: CDVCommandStatus_OK
                                messageAsDictionary: resultDict
                                ];
-   //[self.commandDelegate sendPluginResult:result callbackId:callback];
+   self.commandDelegate sendPluginResult:result callbackId:callback];
 }
 
 //--------------------------------------------------------------------------
@@ -238,7 +239,7 @@
                                messageAsString: message
                                ];
     
-     //[self.commandDelegate sendPluginResult:result callbackId:callback];
+     [self.commandDelegate sendPluginResult:result callbackId:callback];
 }
 
 @end
@@ -294,8 +295,8 @@ parentViewController:(UIViewController*)parentViewController
     self.capturing = NO;
     self.results = [NSMutableArray new];
     
-    //CFURLRef soundFileURLRef  = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("CDVBarcodeScanner.bundle/beep"), CFSTR ("caf"), NULL);
-    //AudioServicesCreateSystemSoundID(soundFileURLRef, &_soundFileObject);
+    CFURLRef soundFileURLRef  = CFBundleCopyResourceURL(CFBundleGetMainBundle(), CFSTR("CDVBarcodeScanner.bundle/beep"), CFSTR ("caf"), NULL);
+    AudioServicesCreateSystemSoundID(soundFileURLRef, &_soundFileObject);
     
     return self;
 }
@@ -390,11 +391,11 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format {
-    //dispatch_sync(dispatch_get_main_queue(), ^{
-    //    [self barcodeScanDone];
-    //    AudioServicesPlaySystemSound(_soundFileObject);
+    dispatch_sync(dispatch_get_main_queue(), ^{
+       [self barcodeScanDone];
+        AudioServicesPlaySystemSound(_soundFileObject);
         [self.plugin returnSuccess:text format:format cancelled:FALSE flipped:FALSE callback:self.callback];
-    //});
+    });
 }
 
 //--------------------------------------------------------------------------
@@ -497,6 +498,10 @@ parentViewController:(UIViewController*)parentViewController
     
     if (!self.capturing) return;
     
+    if ([connection isVideoOrientationSupported]) {
+        [connection setVideoOrientation: self.captureOrientation];
+    }
+    
 #if USE_SHUTTER
     if (!self.viewController.shutterPressed) return;
     self.viewController.shutterPressed = NO;
@@ -555,9 +560,9 @@ parentViewController:(UIViewController*)parentViewController
         const char* cString      = resultText->getText().c_str();
         NSString*   resultString = [[[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding] autorelease];
         
-//        if ([self checkResult:resultString]) {
-//            [self barcodeScanSucceeded:resultString format:format];
-//        }
+        if ([self checkResult:resultString]) {
+            [self barcodeScanSucceeded:resultString format:format];
+        }
         
         
         
@@ -874,9 +879,24 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)viewWillAppear:(BOOL)animated {
+    //Get Preview Layer connection
+    AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
     
     // set video orientation to what the camera sees
-    self.processor.previewLayer.connection.videoOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+    UIInterfaceOrientation appOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+    
+    if (appOrientation == UIInterfaceOrientationLandscapeLeft) {
+        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeLeft;
+    } else if (appOrientation == UIInterfaceOrientationLandscapeRight) {
+        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeRight;
+    } else {
+        self.processor.captureOrientation = AVCaptureVideoOrientationPortrait;
+    }
+    
+    if ([previewLayerConnection isVideoOrientationSupported]) {
+        [previewLayerConnection setVideoOrientation: self.processor.captureOrientation];
+    }
+
     
     // this fixes the bug when the statusbar is landscape, and the preview layer
     // starts up in portrait (not filling the whole view)
