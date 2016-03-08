@@ -868,9 +868,9 @@ parentViewController:(UIViewController*)parentViewController
     previewLayer.frame = self.view.bounds;
     previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     
-    //if ([previewLayer.connection isVideoOrientationSupported]) {
-    //    [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
-    //}
+    if ([previewLayer.connection isVideoOrientationSupported]) {
+        [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
+    }
     
     [self.view.layer insertSublayer:previewLayer below:[[self.view.layer sublayers] objectAtIndex:0]];
     
@@ -879,28 +879,13 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)viewWillAppear:(BOOL)animated {
-    //Get Preview Layer connection
-    AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
-    
     // set video orientation to what the camera sees
-    UIInterfaceOrientation appOrientation = [[UIApplication sharedApplication] statusBarOrientation];
-    
-    if (appOrientation == UIInterfaceOrientationLandscapeLeft) {
-        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeLeft;
-    } else if (appOrientation == UIInterfaceOrientationLandscapeRight) {
-        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeRight;
-    } else {
-        self.processor.captureOrientation = AVCaptureVideoOrientationPortrait;
-    }
-    
-    if ([previewLayerConnection isVideoOrientationSupported]) {
-        [previewLayerConnection setVideoOrientation: self.processor.captureOrientation];
-    }
-
+    self.processor.previewLayer.connection.videoOrientation = [[UIApplication sharedApplication] statusBarOrientation];
     
     // this fixes the bug when the statusbar is landscape, and the preview layer
     // starts up in portrait (not filling the whole view)
     self.processor.previewLayer.frame = self.view.bounds;
+
 }
 
 //--------------------------------------------------------------------------
