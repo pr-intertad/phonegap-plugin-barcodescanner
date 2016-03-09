@@ -536,9 +536,9 @@ parentViewController:(UIViewController*)parentViewController
         DecodeHints decodeHints;
         if (self.formats != nil)
         {
-            NSLog(self.formats);
+            NSLog(@"%@", self.formats);
             NSArray *items = [self.formats componentsSeparatedByString:@","];
-            NsLog(items);
+            NSLog(@"%@", items);
             for (id item in items)
             {
                 NSNumber* code = (NSNumber*)item;
