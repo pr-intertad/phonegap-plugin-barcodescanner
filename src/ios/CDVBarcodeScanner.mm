@@ -534,15 +534,29 @@ parentViewController:(UIViewController*)parentViewController
     
     try {
         DecodeHints decodeHints;
-        decodeHints.addFormat(BarcodeFormat_QR_CODE);
-        decodeHints.addFormat(BarcodeFormat_DATA_MATRIX);
-        decodeHints.addFormat(BarcodeFormat_UPC_E);
-        decodeHints.addFormat(BarcodeFormat_UPC_A);
-        decodeHints.addFormat(BarcodeFormat_EAN_8);
-        decodeHints.addFormat(BarcodeFormat_EAN_13);
-        decodeHints.addFormat(BarcodeFormat_CODE_128);
-        decodeHints.addFormat(BarcodeFormat_CODE_39);
-        decodeHints.addFormat(BarcodeFormat_ITF);
+        if (self.formats != nil)
+        {
+            NSArray *items = [self.formats componentsSeparatedByString:@","];
+            
+            for (id item in items)
+            {
+                NSNumber* code = (NSNumber*)item;
+                
+                decodeHints.addFormat([self formatFromCode:[code intValue]]);
+            }
+        }
+        else
+        {
+           decodeHints.addFormat(BarcodeFormat_QR_CODE);
+           decodeHints.addFormat(BarcodeFormat_DATA_MATRIX);
+           decodeHints.addFormat(BarcodeFormat_UPC_E);
+           decodeHints.addFormat(BarcodeFormat_UPC_A);
+           decodeHints.addFormat(BarcodeFormat_EAN_8);
+           decodeHints.addFormat(BarcodeFormat_EAN_13);
+           decodeHints.addFormat(BarcodeFormat_CODE_128);
+           decodeHints.addFormat(BarcodeFormat_CODE_39);
+           decodeHints.addFormat(BarcodeFormat_ITF);
+        }
         
         // here's the meat of the decode process
         Ref<LuminanceSource>   luminanceSource   ([self getLuminanceSourceFromSample: sampleBuffer imageBytes:&imageBytes]);
@@ -604,6 +618,18 @@ parentViewController:(UIViewController*)parentViewController
     return @"???";
 }
 
+- (zxing::BarcodeFormat)formatFromCode:(int)code {
+    if (code == 2048)		return zxing::BarcodeFormat_QR_CODE;
+    if (code == 32)	return zxing::BarcodeFormat_DATA_MATRIX;
+    if (code == 32768)		return zxing::BarcodeFormat_UPC_E;
+    if (code == 16384)		return zxing::BarcodeFormat_UPC_A;
+    if (code == 64)		return zxing::BarcodeFormat_EAN_8;
+    if (code == 128)		return zxing::BarcodeFormat_EAN_13;
+    if (code == 16)	return zxing::BarcodeFormat_CODE_128;
+    if (code == 4)		return zxing::BarcodeFormat_CODE_39;
+    if (code == 256)		    return zxing::BarcodeFormat_ITF;
+    return zxing::BarcodeFormat_None;
+}
 //--------------------------------------------------------------------------
 // convert capture's sample buffer (scanned picture) into the thing that
 // zxing needs.
