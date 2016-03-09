@@ -559,9 +559,9 @@ parentViewController:(UIViewController*)parentViewController
         const char* cString      = resultText->getText().c_str();
         NSString*   resultString = [[[NSString alloc] initWithCString:cString encoding:NSUTF8StringEncoding] autorelease];
         
-        if ([self checkResult:resultString]) {
+        //if ([self checkResult:resultString]) {
             [self barcodeScanSucceeded:resultString format:format];
-        }
+        //}
         
         
         
@@ -867,9 +867,9 @@ parentViewController:(UIViewController*)parentViewController
     previewLayer.frame = self.view.bounds;
     previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
     
-    if ([previewLayer.connection isVideoOrientationSupported]) {
-        [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
-    }
+    //if ([previewLayer.connection isVideoOrientationSupported]) {
+    //    [previewLayer.connection setVideoOrientation:AVCaptureVideoOrientationPortrait];
+    //}
     
     [self.view.layer insertSublayer:previewLayer below:[[self.view.layer sublayers] objectAtIndex:0]];
     
@@ -878,13 +878,30 @@ parentViewController:(UIViewController*)parentViewController
 
 //--------------------------------------------------------------------------
 - (void)viewWillAppear:(BOOL)animated {
+    //Get Preview Layer connection
+    AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
+    
     // set video orientation to what the camera sees
-    self.processor.previewLayer.connection.videoOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+    UIInterfaceOrientation appOrientation = [[UIApplication sharedApplication] statusBarOrientation];
+    
+    if (appOrientation == UIInterfaceOrientationLandscapeLeft) {
+        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeLeft;
+    } else if (appOrientation == UIInterfaceOrientationLandscapeRight) {
+        self.processor.captureOrientation = AVCaptureVideoOrientationLandscapeRight;
+    } else {
+        self.processor.captureOrientation = AVCaptureVideoOrientationPortrait;
+    }
+    
+    if ([previewLayerConnection isVideoOrientationSupported]) {
+        [previewLayerConnection setVideoOrientation: self.processor.captureOrientation];
+    }
     
     // this fixes the bug when the statusbar is landscape, and the preview layer
     // starts up in portrait (not filling the whole view)
+    
     self.processor.previewLayer.frame = self.view.bounds;
-
+    
+    //self.processor.previewLayer.frame = [[UIScreen mainScreen] bounds];
 }
 
 //--------------------------------------------------------------------------
@@ -1002,13 +1019,7 @@ parentViewController:(UIViewController*)parentViewController
     
     reticleView.opaque           = NO;
     reticleView.contentMode      = UIViewContentModeScaleToFill;
-    reticleView.autoresizingMask = 0
-    | UIViewAutoresizingFlexibleLeftMargin
-    | UIViewAutoresizingFlexibleRightMargin
-    | UIViewAutoresizingFlexibleTopMargin
-    | UIViewAutoresizingFlexibleBottomMargin
-    ;
-    
+    reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
     
     if (self.processor.torchIsPresent) {
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
@@ -1036,9 +1047,9 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 
 #define RETICLE_SIZE    500.0f
-#define RETICLE_WIDTH     3.0f
-#define RETICLE_OFFSET_X  0.0f
-#define RETICLE_OFFSET_Y  0.0f
+#define RETICLE_WIDTH     10.0f
+#define RETICLE_OFFSET_X  60.0f
+#define RETICLE_OFFSET_Y  60.0f
 #define RETICLE_ALPHA     0.4f
 #define RETICLE_PADDING  10.0f
 
@@ -1100,17 +1111,17 @@ parentViewController:(UIViewController*)parentViewController
 
 - (BOOL)shouldAutorotate
 {
-    return NO;
+    return YES;
 }
 
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
-    return UIInterfaceOrientationPortrait;
+    return UIInterfaceOrientationLandscapeRight;
 }
 
 - (NSUInteger)supportedInterfaceOrientations
 {
-    return UIInterfaceOrientationMaskPortrait;
+    return UIInterfaceOrientationMaskLandscapeRight;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
@@ -1125,8 +1136,16 @@ parentViewController:(UIViewController*)parentViewController
 - (void) willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)orientation duration:(NSTimeInterval)duration
 {
     [CATransaction begin];
+    //Get Preview Layer connection
+    AVCaptureConnection *previewLayerConnection=self.processor.previewLayer.connection;
     
-    self.processor.previewLayer.connection.videoOrientation = orientation;
+    if ([previewLayerConnection isVideoOrientationSupported]) {
+        [previewLayerConnection setVideoOrientation: orientation];
+    }
+    
+    self.processor.captureOrientation = orientation;
+
+    
     [self.processor.previewLayer layoutSublayers];
     self.processor.previewLayer.frame = self.view.bounds;
     
