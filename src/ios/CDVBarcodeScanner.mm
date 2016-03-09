@@ -78,6 +78,7 @@
 @property (nonatomic)         BOOL                        is2D;
 @property (nonatomic)         BOOL                        capturing;
 @property (nonatomic)         BOOL                        isFrontCamera;
+@property (nonatomic)         BOOL                        torchIsPresent;
 @property (nonatomic)         BOOL                        isFlipped;
 
 
@@ -428,6 +429,7 @@ parentViewController:(UIViewController*)parentViewController
     
     AVCaptureSession* captureSession = [[[AVCaptureSession alloc] init] autorelease];
     self.captureSession = captureSession;
+    self.torchIsPresent = NO;
     
     
     AVCaptureDevice* __block device = nil;
@@ -445,6 +447,7 @@ parentViewController:(UIViewController*)parentViewController
         
     }
     
+    self.torchIsPresent = (device && device.hasFlash);
     
     AVCaptureDeviceInput* input = [AVCaptureDeviceInput deviceInputWithDevice:device error:&error];
     if (!input) return @"unable to obtain video capture device input";
@@ -497,10 +500,6 @@ parentViewController:(UIViewController*)parentViewController
 - (void)captureOutput:(AVCaptureOutput*)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection*)connection {
     
     if (!self.capturing) return;
-    
-    if ([connection isVideoOrientationSupported]) {
-        [connection setVideoOrientation: self.captureOrientation];
-    }
     
 #if USE_SHUTTER
     if (!self.viewController.shutterPressed) return;
@@ -1003,10 +1002,15 @@ parentViewController:(UIViewController*)parentViewController
     
     reticleView.opaque           = NO;
     reticleView.contentMode      = UIViewContentModeScaleToFill;
-    reticleView.autoresizingMask = (UIViewAutoresizingFlexibleHeight | UIViewAutoresizingFlexibleWidth);
+    reticleView.autoresizingMask = 0
+    | UIViewAutoresizingFlexibleLeftMargin
+    | UIViewAutoresizingFlexibleRightMargin
+    | UIViewAutoresizingFlexibleTopMargin
+    | UIViewAutoresizingFlexibleBottomMargin
+    ;
     
     
-    if (false) {
+    if (self.processor.torchIsPresent) {
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         
         NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"]];
