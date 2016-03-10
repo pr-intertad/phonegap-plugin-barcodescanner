@@ -536,15 +536,14 @@ parentViewController:(UIViewController*)parentViewController
         DecodeHints decodeHints;
         if (self.formats != nil)
         {
-            NSLog(@"%@", self.formats);
-            NSArray *items = [self.formats componentsSeparatedByString:@","];
-            NSLog(@"%@", items);
-            for (id item in items)
-            {
-                NSNumber* code = (NSNumber*)item;
-                
-                decodeHints.addFormat([self formatFromCode:[code intValue]]);
-            }
+            NSLog(@"formats = %@", self.formats);
+            //NSArray *items = [self.formats componentsSeparatedByString:@","];
+            //NSLog(@"%@", items);
+            //for (id item in items)
+            //{
+                //NSNumber* code = (NSNumber*)item;
+                decodeHints.addFormat([self formatFromCode:[self.formats intValue]]);
+            //}
         }
         else
         {
