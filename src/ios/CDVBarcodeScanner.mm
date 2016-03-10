@@ -553,7 +553,7 @@ parentViewController:(UIViewController*)parentViewController
            //decodeHints.addFormat(BarcodeFormat_UPC_A);
            //decodeHints.addFormat(BarcodeFormat_EAN_8);
            //decodeHints.addFormat(BarcodeFormat_EAN_13);
-           //decodeHints.addFormat(BarcodeFormat_CODE_128);
+           decodeHints.addFormat(BarcodeFormat_CODE_128);
            decodeHints.addFormat(BarcodeFormat_CODE_39);
            //decodeHints.addFormat(BarcodeFormat_ITF);
         //}
@@ -1073,9 +1073,9 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 
 #define RETICLE_SIZE    500.0f
-#define RETICLE_WIDTH     10.0f
-#define RETICLE_OFFSET_X  60.0f
-#define RETICLE_OFFSET_Y  60.0f
+#define RETICLE_WIDTH     3.0f
+#define RETICLE_OFFSET_X  0.0f
+#define RETICLE_OFFSET_Y  0.0f
 #define RETICLE_ALPHA     0.4f
 #define RETICLE_PADDING  10.0f
 
