@@ -1,5 +1,5 @@
 
-#include "zxing-all-in-one.h"
+#include "zxing-all-in-one1.h"
 
 // file: zxing/BarcodeFormat.cpp
 
