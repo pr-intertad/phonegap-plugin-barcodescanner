@@ -12,9 +12,9 @@
 #import <AssetsLibrary/AssetsLibrary.h>
 
 //------------------------------------------------------------------------------
-// use the all-in-one version of zxing that we built
+// use the all-in-one version of zxing1 that we built
 //------------------------------------------------------------------------------
-#import "zxing-all-in-one.h"
+#import "zxing-all-in-one1.h"
 
 #import <Cordova/CDVPlugin.h>
 
@@ -90,11 +90,11 @@
 - (void)openDialog;
 - (NSString*)setUpCaptureSession;
 - (void)captureOutput:(AVCaptureOutput*)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection*)connection;
-- (NSString*)formatStringFrom:(zxing::BarcodeFormat)format;
-- (zxing::BarcodeFormat)formatFrom:(NSString*)formatString;
+- (NSString*)formatStringFrom:(zxing1::BarcodeFormat)format;
+- (zxing1::BarcodeFormat)formatFrom:(NSString*)formatString;
 - (UIImage*)getImageFromSample:(CMSampleBufferRef)sampleBuffer;
-- (zxing::Ref<zxing::LuminanceSource>) getLuminanceSourceFromSample:(CMSampleBufferRef)sampleBuffer imageBytes:(uint8_t**)ptr;
-- (UIImage*) getImageFromLuminanceSource:(zxing::LuminanceSource*)luminanceSource;
+- (zxing1::Ref<zxing1::LuminanceSource>) getLuminanceSourceFromSample:(CMSampleBufferRef)sampleBuffer imageBytes:(uint8_t**)ptr;
+- (UIImage*) getImageFromLuminanceSource:(zxing1::LuminanceSource*)luminanceSource;
 - (void)dumpImage:(UIImage*)image;
 @end
 
@@ -474,7 +474,7 @@ parentViewController:(UIViewController*)parentViewController
 #endif
     
     
-    using namespace zxing;
+    using namespace zxing1;
     
     // LuminanceSource is pretty dumb; we have to give it a pointer to
     // a byte array, but then can't get it back out again.  We need to
@@ -528,11 +528,11 @@ parentViewController:(UIViewController*)parentViewController
         [self barcodeScanSucceeded:resultString format:format];
         
     }
-    catch (zxing::ReaderException &rex) {
+    catch (zxing1::ReaderException &rex) {
         //            NSString *message = [[[NSString alloc] initWithCString:rex.what() encoding:NSUTF8StringEncoding] autorelease];
         //            NSLog(@"decoding: ReaderException: %@", message);
     }
-    catch (zxing::IllegalArgumentException &iex) {
+    catch (zxing1::IllegalArgumentException &iex) {
         //            NSString *message = [[[NSString alloc] initWithCString:iex.what() encoding:NSUTF8StringEncoding] autorelease];
         //            NSLog(@"decoding: IllegalArgumentException: %@", message);
     }
@@ -553,41 +553,41 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 // convert barcode format to string
 //--------------------------------------------------------------------------
-- (NSString*)formatStringFrom:(zxing::BarcodeFormat)format {
-    if (format == zxing::BarcodeFormat_QR_CODE)      return @"QR_CODE";
-    if (format == zxing::BarcodeFormat_DATA_MATRIX)  return @"DATA_MATRIX";
-    if (format == zxing::BarcodeFormat_UPC_E)        return @"UPC_E";
-    if (format == zxing::BarcodeFormat_UPC_A)        return @"UPC_A";
-    if (format == zxing::BarcodeFormat_EAN_8)        return @"EAN_8";
-    if (format == zxing::BarcodeFormat_EAN_13)       return @"EAN_13";
-    if (format == zxing::BarcodeFormat_CODE_128)     return @"CODE_128";
-    if (format == zxing::BarcodeFormat_CODE_39)      return @"CODE_39";
-    if (format == zxing::BarcodeFormat_VIN_CODE)     return @"VIN_CODE";
-    if (format == zxing::BarcodeFormat_ITF)          return @"ITF";
+- (NSString*)formatStringFrom:(zxing1::BarcodeFormat)format {
+    if (format == zxing1::BarcodeFormat_QR_CODE)      return @"QR_CODE";
+    if (format == zxing1::BarcodeFormat_DATA_MATRIX)  return @"DATA_MATRIX";
+    if (format == zxing1::BarcodeFormat_UPC_E)        return @"UPC_E";
+    if (format == zxing1::BarcodeFormat_UPC_A)        return @"UPC_A";
+    if (format == zxing1::BarcodeFormat_EAN_8)        return @"EAN_8";
+    if (format == zxing1::BarcodeFormat_EAN_13)       return @"EAN_13";
+    if (format == zxing1::BarcodeFormat_CODE_128)     return @"CODE_128";
+    if (format == zxing1::BarcodeFormat_CODE_39)      return @"CODE_39";
+    if (format == zxing1::BarcodeFormat_VIN_CODE)     return @"VIN_CODE";
+    if (format == zxing1::BarcodeFormat_ITF)          return @"ITF";
     return @"???";
 }
 
 //--------------------------------------------------------------------------
 // convert string to barcode format
 //--------------------------------------------------------------------------
-- (zxing::BarcodeFormat)formatFrom:(NSString*)formatString {
-    if ([formatString isEqualToString: @"QR_CODE"])		return zxing::BarcodeFormat_QR_CODE;
-    if ([formatString isEqualToString: @"DATA_MATRIX"])	return zxing::BarcodeFormat_DATA_MATRIX;
-    if ([formatString isEqualToString: @"UPC_E"])		return zxing::BarcodeFormat_UPC_E;
-    if ([formatString isEqualToString: @"UPC_A"])		return zxing::BarcodeFormat_UPC_A;
-    if ([formatString isEqualToString: @"EAN_8"])		return zxing::BarcodeFormat_EAN_8;
-    if ([formatString isEqualToString: @"EAN_13"])		return zxing::BarcodeFormat_EAN_13;
-    if ([formatString isEqualToString: @"CODE_128"])	return zxing::BarcodeFormat_CODE_128;
-    if ([formatString isEqualToString: @"CODE_39"])		return zxing::BarcodeFormat_CODE_39;
-    if ([formatString isEqualToString: @"VIN_CODE"])    return zxing::BarcodeFormat_VIN_CODE;
-    if ([formatString isEqualToString: @"ITF"])		    return zxing::BarcodeFormat_ITF;
-    return zxing::BarcodeFormat_None;
+- (zxing1::BarcodeFormat)formatFrom:(NSString*)formatString {
+    if ([formatString isEqualToString: @"QR_CODE"])		return zxing1::BarcodeFormat_QR_CODE;
+    if ([formatString isEqualToString: @"DATA_MATRIX"])	return zxing1::BarcodeFormat_DATA_MATRIX;
+    if ([formatString isEqualToString: @"UPC_E"])		return zxing1::BarcodeFormat_UPC_E;
+    if ([formatString isEqualToString: @"UPC_A"])		return zxing1::BarcodeFormat_UPC_A;
+    if ([formatString isEqualToString: @"EAN_8"])		return zxing1::BarcodeFormat_EAN_8;
+    if ([formatString isEqualToString: @"EAN_13"])		return zxing1::BarcodeFormat_EAN_13;
+    if ([formatString isEqualToString: @"CODE_128"])	return zxing1::BarcodeFormat_CODE_128;
+    if ([formatString isEqualToString: @"CODE_39"])		return zxing1::BarcodeFormat_CODE_39;
+    if ([formatString isEqualToString: @"VIN_CODE"])    return zxing1::BarcodeFormat_VIN_CODE;
+    if ([formatString isEqualToString: @"ITF"])		    return zxing1::BarcodeFormat_ITF;
+    return zxing1::BarcodeFormat_None;
 }
 //--------------------------------------------------------------------------
 // convert capture's sample buffer (scanned picture) into the thing that
-// zxing needs.
+// zxing1 needs.
 //--------------------------------------------------------------------------
-- (zxing::Ref<zxing::LuminanceSource>) getLuminanceSourceFromSample:(CMSampleBufferRef)sampleBuffer imageBytes:(uint8_t**)ptr {
+- (zxing1::Ref<zxing1::LuminanceSource>) getLuminanceSourceFromSample:(CMSampleBufferRef)sampleBuffer imageBytes:(uint8_t**)ptr {
     CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
     CVPixelBufferLockBaseAddress(imageBuffer, 0);
     
@@ -609,7 +609,7 @@ parentViewController:(UIViewController*)parentViewController
     
     if (!greyData) {
         CVPixelBufferUnlockBaseAddress(imageBuffer,0);
-        throw new zxing::ReaderException("out of memory");
+        throw new zxing1::ReaderException("out of memory");
     }
     
     size_t offsetX = (width - greyWidth) / 2;
@@ -638,7 +638,7 @@ parentViewController:(UIViewController*)parentViewController
     
     CVPixelBufferUnlockBaseAddress(imageBuffer,0);
     
-    using namespace zxing;
+    using namespace zxing1;
     
     Ref<LuminanceSource> luminanceSource (
                                           new GreyscaleLuminanceSource(greyData, greyWidth, greyHeight, 0, 0, greyWidth, greyHeight)
@@ -650,7 +650,7 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 // for debugging
 //--------------------------------------------------------------------------
-- (UIImage*) getImageFromLuminanceSource:(zxing::LuminanceSource*)luminanceSource  {
+- (UIImage*) getImageFromLuminanceSource:(zxing1::LuminanceSource*)luminanceSource  {
     unsigned char* bytes = luminanceSource->getMatrix();
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceGray();
     CGContextRef context = CGBitmapContextCreate(
