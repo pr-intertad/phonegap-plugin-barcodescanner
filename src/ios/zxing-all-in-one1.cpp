@@ -498,28 +498,28 @@ namespace zxing1 {
                          hints.containsFormat(BarcodeFormat_CODE_39) ||
                          hints.containsFormat(BarcodeFormat_ITF);
     if (addOneDReader && !tryHarder) {
-      readers_.push_back(Ref<Reader>(new zxing::oned::MultiFormatOneDReader(hints)));
+      readers_.push_back(Ref<Reader>(new zxing1::oned::MultiFormatOneDReader(hints)));
     }
     if (hints.containsFormat(BarcodeFormat_VIN_CODE)) {
-      readers_.push_back(Ref<Reader>(new zxing::oned::VINReader()));
+      readers_.push_back(Ref<Reader>(new zxing1::oned::VINReader()));
     }
     if (hints.containsFormat(BarcodeFormat_QR_CODE)) {
-      readers_.push_back(Ref<Reader>(new zxing::qrcode::QRCodeReader()));
+      readers_.push_back(Ref<Reader>(new zxing1::qrcode::QRCodeReader()));
     }
     if (hints.containsFormat(BarcodeFormat_DATA_MATRIX)) {
-      readers_.push_back(Ref<Reader>(new zxing::datamatrix::DataMatrixReader()));
+      readers_.push_back(Ref<Reader>(new zxing1::datamatrix::DataMatrixReader()));
     }
     //TODO: add PDF417 here once PDF417 reader is implemented
     if (addOneDReader && tryHarder) {
-      readers_.push_back(Ref<Reader>(new zxing::oned::MultiFormatOneDReader(hints)));
+      readers_.push_back(Ref<Reader>(new zxing1::oned::MultiFormatOneDReader(hints)));
     }
     if (readers_.size() == 0) {
       if (!tryHarder) {
-        readers_.push_back(Ref<Reader>(new zxing::oned::MultiFormatOneDReader(hints)));
+        readers_.push_back(Ref<Reader>(new zxing1::oned::MultiFormatOneDReader(hints)));
       }
-      readers_.push_back(Ref<Reader>(new zxing::qrcode::QRCodeReader()));
+      readers_.push_back(Ref<Reader>(new zxing1::qrcode::QRCodeReader()));
       if (tryHarder) {
-        readers_.push_back(Ref<Reader>(new zxing::oned::MultiFormatOneDReader(hints)));
+        readers_.push_back(Ref<Reader>(new zxing1::oned::MultiFormatOneDReader(hints)));
       }
     }
   }
@@ -1026,9 +1026,9 @@ void BitArray::reverse() {
 using std::ostream;
 using std::ostringstream;
 
-using zxing::BitMatrix;
-using zxing::BitArray;
-using zxing::Ref;
+using zxing1::BitMatrix;
+using zxing1::BitArray;
+using zxing1::Ref;
 
 namespace {
   size_t wordsForSize(size_t width,
@@ -1259,8 +1259,8 @@ int BitSource::available() {
 
 using std::string;
 
-using zxing::common::CharacterSetECI;
-using zxing::IllegalArgumentException;
+using zxing1::common::CharacterSetECI;
+using zxing1::IllegalArgumentException;
 
 std::map<int, CharacterSetECI*> CharacterSetECI::VALUE_TO_ECI;
 std::map<std::string, CharacterSetECI*> CharacterSetECI::NAME_TO_ECI;
@@ -1480,8 +1480,8 @@ Ref<PerspectiveTransform> DetectorResult::getTransform() {
 // #include <zxing/common/CharacterSetECI.h>
 // #include <zxing/common/IllegalArgumentException.h>
 
-using zxing::common::ECI;
-using zxing::IllegalArgumentException;
+using zxing1::common::ECI;
+using zxing1::IllegalArgumentException;
 
 ECI::ECI(int value_) : value(value_) {}
 
@@ -5856,7 +5856,7 @@ Ref<Result> ByQuadrantReader::decode(Ref<BinaryBitmap> image, DecodeHints hints)
   return delegate_.decode(center, hints);
 }
 
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 // file: zxing/multi/GenericMultipleBarcodeReader.cpp
@@ -5987,7 +5987,7 @@ Ref<Result> GenericMultipleBarcodeReader::translateResultPoints(Ref<Result> resu
   return Ref<Result>(new Result(result->getText(), result->getRawBytes(), newResultPoints, result->getBarcodeFormat()));
 }
 
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 // file: zxing/multi/MultipleBarcodeReader.cpp
@@ -6019,7 +6019,7 @@ std::vector<Ref<Result> > MultipleBarcodeReader::decodeMultiple(Ref<BinaryBitmap
   return decodeMultiple(image, DecodeHints::DEFAULT_HINT);
 }
 
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 // file: zxing/multi/qrcode/QRCodeMultiReader.cpp
@@ -6079,7 +6079,7 @@ std::vector<Ref<Result> > QRCodeMultiReader::decodeMultiple(Ref<BinaryBitmap> im
   return results;
 }
 
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 // file: zxing/multi/qrcode/detector/MultiDetector.cpp
@@ -6128,7 +6128,7 @@ std::vector<Ref<DetectorResult> > MultiDetector::detectMulti(DecodeHints hints){
   return result;
 }
 
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 // file: zxing/multi/qrcode/detector/MultiFinderPatternFinder.cpp
@@ -6361,7 +6361,7 @@ std::vector<std::vector<Ref<FinderPattern> > > MultiFinderPatternFinder::selectB
   return results;
 }
 
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 // file: zxing/oned/Code128Reader.cpp
@@ -10723,7 +10723,7 @@ Ref<DecoderResult> Decoder::decode(Ref<BitMatrix> bits) {
 // #include <zxing/qrcode/Version.h>
 // #include <sstream>
 
-using zxing::qrcode::Mode;
+using zxing1::qrcode::Mode;
 using std::ostringstream;
 
 Mode Mode::TERMINATOR(0, 0, 0, 0x00, "TERMINATOR");
@@ -11043,7 +11043,7 @@ Ref<AlignmentPattern> AlignmentPatternFinder::find() {
     return center;
   }
 
-  throw zxing::ReaderException("Could not find alignment pattern");
+  throw zxing1::ReaderException("Could not find alignment pattern");
 }
 
 }
@@ -11111,7 +11111,7 @@ Ref<DetectorResult> Detector::processFinderPatternInfo(Ref<FinderPatternInfo> in
 
   float moduleSize = calculateModuleSize(topLeft, topRight, bottomLeft);
   if (moduleSize < 1.0f) {
-    throw zxing::ReaderException("bad module size");
+    throw zxing1::ReaderException("bad module size");
   }
   int dimension = computeDimension(topLeft, topRight, bottomLeft, moduleSize);
   Version *provisionalVersion = Version::getProvisionalVersionForDimension(dimension);
@@ -11139,7 +11139,7 @@ Ref<DetectorResult> Detector::processFinderPatternInfo(Ref<FinderPatternInfo> in
       try {
         alignmentPattern = findAlignmentInRegion(moduleSize, estAlignmentX, estAlignmentY, (float)i);
         break;
-      } catch (zxing::ReaderException const& re) {
+      } catch (zxing1::ReaderException const& re) {
         // try next round
       }
     }
@@ -11210,7 +11210,7 @@ int Detector::computeDimension(Ref<ResultPoint> topLeft, Ref<ResultPoint> topRig
   case 3:
     ostringstream s;
     s << "Bad dimension: " << dimension;
-    throw zxing::ReaderException(s.str().c_str());
+    throw zxing1::ReaderException(s.str().c_str());
   }
   return dimension;
 }
@@ -11334,12 +11334,12 @@ Ref<AlignmentPattern> Detector::findAlignmentInRegion(float overallEstModuleSize
   int alignmentAreaLeftX = max(0, estAlignmentX - allowance);
   int alignmentAreaRightX = min((int)(image_->getWidth() - 1), estAlignmentX + allowance);
   if (alignmentAreaRightX - alignmentAreaLeftX < overallEstModuleSize * 3) {
-      throw zxing::ReaderException("region too small to hold alignment pattern");
+      throw zxing1::ReaderException("region too small to hold alignment pattern");
   }
   int alignmentAreaTopY = max(0, estAlignmentY - allowance);
   int alignmentAreaBottomY = min((int)(image_->getHeight() - 1), estAlignmentY + allowance);
   if (alignmentAreaBottomY - alignmentAreaTopY < overallEstModuleSize * 3) {
-      throw zxing::ReaderException("region too small to hold alignment pattern");
+      throw zxing1::ReaderException("region too small to hold alignment pattern");
   }
 
   AlignmentPatternFinder alignmentFinder(image_, alignmentAreaLeftX, alignmentAreaTopY, alignmentAreaRightX
@@ -11741,7 +11741,7 @@ vector<Ref<FinderPattern> > FinderPatternFinder::selectBestPatterns() {
 
   if (startSize < 3) {
     // Couldn't find enough finder patterns
-    throw zxing::ReaderException("Could not find three finder patterns");
+    throw zxing1::ReaderException("Could not find three finder patterns");
   }
 
   // Filter outlier possibilities whose module size is too different
@@ -12122,7 +12122,7 @@ Ref<PerspectiveTransform> QREdgeDetector::get1CornerTransform(Point topLeft, Poi
   return transform;
 }
 
-// Adapted from "sizeOfBlackWhiteBlackRun" in zxing::qrcode::Detector
+// Adapted from "sizeOfBlackWhiteBlackRun" in zxing1::qrcode::Detector
 Point QREdgeDetector::endOfReverseBlackWhiteBlackRun(const BitMatrix& image, Point from, Point to) {
   int fromX = (int)from.x;
   int fromY = (int)from.y;
