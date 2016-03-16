@@ -15,7 +15,7 @@
          *
          * @returns {BarcodeScanner}
          */
-        function BarcodeScanner() {
+        function BarcodeScannerVin() {
 
             /**
              * Encoding constants.
@@ -70,7 +70,7 @@
          *    }
          * @param {Function} errorCallback
          */
-        BarcodeScanner.prototype.scan = function (successCallback, errorCallback, config) {
+        BarcodeScannerVin.prototype.scan = function (successCallback, errorCallback, config) {
 
             if(config instanceof Array) {
                 // do nothing
@@ -112,7 +112,7 @@
         };
 
         //-------------------------------------------------------------------
-        BarcodeScanner.prototype.encode = function (type, data, successCallback, errorCallback, options) {
+        BarcodeScannerVin.prototype.encode = function (type, data, successCallback, errorCallback, options) {
             if (errorCallback == null) {
                 errorCallback = function () {
                 };
@@ -128,19 +128,19 @@
                 return;
             }
 
-            exec(successCallback, errorCallback, 'BarcodeScanner', 'encode', [
+            exec(successCallback, errorCallback, 'BarcodeScannerVin', 'encode', [
                 {"type": type, "data": data, "options": options}
             ]);
         };
 
-        var barcodeScanner = new BarcodeScanner();
-        module.exports = barcodeScanner;
+        var barcodeScannerVin = new BarcodeScannerVin();
+        module.exports = barcodeScannerVin;
 
     }
 
     ScannerLoader(require, exports, module);
 
-    cordova.define("cordova/plugin/BarcodeScanner", ScannerLoader);
+    cordova.define("cordova/plugin/BarcodeScannerVin", ScannerLoader);
 
 
 
