@@ -65,7 +65,7 @@
 @property (nonatomic, retain) CDVBarcodeScanner1*           plugin;
 @property (nonatomic, retain) NSString*                   callback;
 @property (nonatomic, retain) UIViewController*           parentViewController;
-@property (nonatomic, retain) CDVbcsViewController*        viewController;
+@property (nonatomic, retain) CDVbcsViewController1*        viewController;
 @property (nonatomic, retain) AVCaptureSession*           captureSession;
 @property (nonatomic, retain) AVCaptureVideoPreviewLayer* previewLayer;
 @property (nonatomic, retain) NSString*                   alternateXib;
