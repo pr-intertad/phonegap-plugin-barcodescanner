@@ -22,7 +22,7 @@
 // Delegate to handle orientation functions
 // 
 //------------------------------------------------------------------------------
-@protocol CDVBarcodeScannerOrientationDelegate <NSObject>
+@protocol CDVBarcodeScannerOrientationDelegate1 <NSObject>
 
 - (NSUInteger)supportedInterfaceOrientations;
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation;
@@ -43,14 +43,14 @@
 #define DEFAULT_SCALE 0.7
 
 //------------------------------------------------------------------------------
-@class CDVbcsProcessor;
-@class CDVbcsViewController;
+@class CDVbcsProcessor1;
+@class CDVbcsViewController1;
 
 
 //------------------------------------------------------------------------------
 // plugin class
 //------------------------------------------------------------------------------
-@interface CDVBarcodeScanner : CDVPlugin {}
+@interface CDVBarcodeScanner1 : CDVPlugin {}
 - (NSString*)isScanNotPossible;
 - (void)scan:(CDVInvokedUrlCommand*)command;
 - (void)encode:(CDVInvokedUrlCommand*)command;
@@ -61,8 +61,8 @@
 //------------------------------------------------------------------------------
 // class that does the grunt work
 //------------------------------------------------------------------------------
-@interface CDVbcsProcessor : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate> {}
-@property (nonatomic, retain) CDVBarcodeScanner*           plugin;
+@interface CDVbcsProcessor1 : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate> {}
+@property (nonatomic, retain) CDVBarcodeScanner1*           plugin;
 @property (nonatomic, retain) NSString*                   callback;
 @property (nonatomic, retain) UIViewController*           parentViewController;
 @property (nonatomic, retain) CDVbcsViewController*        viewController;
@@ -82,7 +82,7 @@
 @property (nonatomic)         BOOL                        isFlipped;
 
 
-- (id)initWithPlugin:(CDVBarcodeScanner*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController config:(NSDictionary *)config;
+- (id)initWithPlugin:(CDVBarcodeScanner1*)plugin callback:(NSString*)callback parentViewController:(UIViewController*)parentViewController config:(NSDictionary *)config;
 - (void)scanBarcode;
 - (void)barcodeScanSucceeded:(NSString*)text format:(NSString*)format;
 - (void)barcodeScanFailed:(NSString*)message;
@@ -101,15 +101,15 @@
 //------------------------------------------------------------------------------
 // view controller for the ui
 //------------------------------------------------------------------------------
-@interface CDVbcsViewController : UIViewController <CDVBarcodeScannerOrientationDelegate> {}
-@property (nonatomic, retain) CDVbcsProcessor*  processor;
+@interface CDVbcsViewController1 : UIViewController <CDVBarcodeScannerOrientationDelegate1> {}
+@property (nonatomic, retain) CDVbcsProcessor1*  processor;
 @property (nonatomic, retain) NSString*        alternateXib;
 @property (nonatomic)         BOOL             shutterPressed;
 @property (nonatomic, retain) IBOutlet UIView* overlayView;
 // unsafe_unretained is equivalent to assign - used to prevent retain cycles in the property below
 @property (nonatomic, unsafe_unretained) id orientationDelegate;
 
-- (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib;
+- (id)initWithProcessor:(CDVbcsProcessor1*)processor alternateOverlay:(NSString *)alternateXib;
 - (void)startCapturing;
 - (UIView*)buildOverlayView;
 - (UIImage*)buildReticleImage: (CGRect) rectArea;
@@ -121,7 +121,7 @@
 //------------------------------------------------------------------------------
 // plugin class
 //------------------------------------------------------------------------------
-@implementation CDVBarcodeScanner
+@implementation CDVBarcodeScanner1
 
 //--------------------------------------------------------------------------
 - (NSString*)isScanNotPossible {
@@ -137,7 +137,7 @@
 
 //--------------------------------------------------------------------------
 - (void)scan:(CDVInvokedUrlCommand*)command {
-    CDVbcsProcessor* processor;
+    CDVbcsProcessor1* processor;
     NSString*       callback;
     NSString*       capabilityError;
     
@@ -157,7 +157,7 @@
         return;
     }
     
-    processor = [[CDVbcsProcessor alloc]
+    processor = [[CDVbcsProcessor1 alloc]
                  initWithPlugin:self
                  callback:callback
                  parentViewController:self.viewController
@@ -212,7 +212,7 @@
 //------------------------------------------------------------------------------
 // class that does the grunt work
 //------------------------------------------------------------------------------
-@implementation CDVbcsProcessor
+@implementation CDVbcsProcessor1
 
 @synthesize plugin               = _plugin;
 @synthesize callback             = _callback;
@@ -226,7 +226,7 @@
 @synthesize capturing            = _capturing;
 
 //--------------------------------------------------------------------------
-- (id)initWithPlugin:(CDVBarcodeScanner*)plugin
+- (id)initWithPlugin:(CDVBarcodeScanner1*)plugin
             callback:(NSString*)callback
 parentViewController:(UIViewController*)parentViewController
   config:(NSDictionary *)config {
@@ -286,7 +286,7 @@ parentViewController:(UIViewController*)parentViewController
         return;
     }
     
-    self.viewController = [[[CDVbcsViewController alloc] initWithProcessor: self alternateOverlay:self.alternateXib] autorelease];
+    self.viewController = [[[CDVbcsViewController1 alloc] initWithProcessor: self alternateOverlay:self.alternateXib] autorelease];
     // here we set the orientation delegate to the MainViewController of the app (orientation controlled in the Project Settings)
     self.viewController.orientationDelegate = self.plugin.viewController;
     
@@ -730,14 +730,14 @@ parentViewController:(UIViewController*)parentViewController
 //------------------------------------------------------------------------------
 // view controller for the ui
 //------------------------------------------------------------------------------
-@implementation CDVbcsViewController
+@implementation CDVbcsViewController1
 @synthesize processor      = _processor;
 @synthesize shutterPressed = _shutterPressed;
 @synthesize alternateXib   = _alternateXib;
 @synthesize overlayView    = _overlayView;
 
 //--------------------------------------------------------------------------
-- (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib {
+- (id)initWithProcessor:(CDVbcsProcessor1*)processor alternateOverlay:(NSString *)alternateXib {
     self = [super init];
     if (!self) return self;
     
@@ -930,7 +930,7 @@ parentViewController:(UIViewController*)parentViewController
     if (self.processor.torchIsPresent) {
         UIButton *button = [UIButton buttonWithType:UIButtonTypeCustom];
         
-        NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner" withExtension:@"bundle"]];
+        NSBundle* bundle = [NSBundle bundleWithURL:[[NSBundle mainBundle]URLForResource:@"CDVBarcodeScanner1" withExtension:@"bundle"]];
         
         NSString *normalPath = [bundle pathForResource:@"Normal" ofType:@"png"];
         NSString *selectedPath = [bundle pathForResource:@"Selected" ofType:@"png"];
@@ -1013,7 +1013,7 @@ parentViewController:(UIViewController*)parentViewController
     return result;
 }
 
-#pragma mark CDVBarcodeScannerOrientationDelegate
+#pragma mark CDVBarcodeScannerOrientationDelegate1
 
 - (BOOL)shouldAutorotate
 {   
