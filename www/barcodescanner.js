@@ -133,14 +133,14 @@
             ]);
         };
 
-        var barcodeScannerVin = new BarcodeScannerVin();
-        module.exports = barcodeScannerVin;
+        var vinScanner = new BarcodeScannerVin();
+        module.exports = vinScanner;
 
     }
 
     ScannerLoader(require, exports, module);
 
-    cordova.define("cordova/plugin/BarcodeScannerVin", ScannerLoader);
+    cordova.define("cordova/plugin/vinScanner", ScannerLoader);
 
 
 
