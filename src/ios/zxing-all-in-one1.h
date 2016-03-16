@@ -87,7 +87,7 @@ public:
 // #include <zxing/Exception.h>
 
 namespace zxing1 {
-class IllegalArgumentException : public zxing::Exception {
+class IllegalArgumentException : public zxing1::Exception {
 public:
   IllegalArgumentException(const char *msg);
   ~IllegalArgumentException() throw();
@@ -3963,7 +3963,7 @@ namespace zxing1 {
     class ECI;
   }
 }
-class zxing::common::ECI {
+class zxing1::common::ECI {
 private:
   const int value;
 
@@ -4011,7 +4011,7 @@ namespace zxing1 {
   }
 }
 
-class zxing::common::CharacterSetECI : public ECI {
+class zxing1::common::CharacterSetECI : public ECI {
 private:
   static std::map<int, CharacterSetECI*> VALUE_TO_ECI;
   static std::map<std::string, CharacterSetECI*> NAME_TO_ECI;
@@ -4088,7 +4088,7 @@ private:
   static void decodeByteSegment(Ref<BitSource> bits_,
                                 std::string& result,
                                 int count,
-                                zxing::common::CharacterSetECI* currentCharacterSetECI,
+                                zxing1::common::CharacterSetECI* currentCharacterSetECI,
                                 ArrayRef< ArrayRef<unsigned char> >& byteSegments,
                                 Hashtable const& hints);
   static void decodeAlphanumericSegment(Ref<BitSource> bits, std::string &result, int count, bool fc1InEffect);
@@ -4629,7 +4629,7 @@ namespace zxing1 {
   }
 }
 
-class zxing::common::StringUtils {
+class zxing1::common::StringUtils {
 private:
   static char const* const PLATFORM_DEFAULT_ENCODING;
 
@@ -4837,7 +4837,7 @@ class ByQuadrantReader : public Reader {
     virtual Ref<Result> decode(Ref<BinaryBitmap> image);
     virtual Ref<Result> decode(Ref<BinaryBitmap> image, DecodeHints hints);
 };
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 #endif // __BY_QUADRANT_READER_H__
@@ -4879,7 +4879,7 @@ class MultipleBarcodeReader : public Counted {
     virtual std::vector<Ref<Result> > decodeMultiple(Ref<BinaryBitmap> image, DecodeHints hints) = 0;
     virtual ~MultipleBarcodeReader();
 };
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 #endif // __MULTIPLE_BARCODE_READER_H__
@@ -4929,7 +4929,7 @@ class GenericMultipleBarcodeReader : public MultipleBarcodeReader {
     virtual std::vector<Ref<Result> > decodeMultiple(Ref<BinaryBitmap> image,
                                                      DecodeHints hints);
 };
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 #endif // __GENERIC_MULTIPLE_BARCODE_READER_H__
@@ -4960,13 +4960,13 @@ class GenericMultipleBarcodeReader : public MultipleBarcodeReader {
 
 namespace zxing1 {
 namespace multi {
-class QRCodeMultiReader: public zxing::qrcode::QRCodeReader, public MultipleBarcodeReader {
+class QRCodeMultiReader: public zxing1::qrcode::QRCodeReader, public MultipleBarcodeReader {
   public:
     QRCodeMultiReader();
     virtual ~QRCodeMultiReader();
     virtual std::vector<Ref<Result> > decodeMultiple(Ref<BinaryBitmap> image, DecodeHints hints);
 };
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 #endif // __QRCODE_MULTI_READER_H__
@@ -4998,13 +4998,13 @@ class QRCodeMultiReader: public zxing::qrcode::QRCodeReader, public MultipleBarc
 
 namespace zxing1 {
 namespace multi {
-class MultiDetector : public zxing::qrcode::Detector {
+class MultiDetector : public zxing1::qrcode::Detector {
   public:
     MultiDetector(Ref<BitMatrix> image);
     virtual ~MultiDetector();
     virtual std::vector<Ref<DetectorResult> > detectMulti(DecodeHints hints);
 };
-} // End zxing::multi namespace
+} // End zxing1::multi namespace
 } // End zxing namespace
 
 #endif // __MULTI_DETECTOR_H__
@@ -5036,9 +5036,9 @@ class MultiDetector : public zxing::qrcode::Detector {
 
 namespace zxing1 {
 namespace multi {
-class MultiFinderPatternFinder : zxing::qrcode::FinderPatternFinder {
+class MultiFinderPatternFinder : zxing1::qrcode::FinderPatternFinder {
   private:
-    std::vector<std::vector<Ref<zxing::qrcode::FinderPattern> > > selectBestPatterns();
+    std::vector<std::vector<Ref<zxing1::qrcode::FinderPattern> > > selectBestPatterns();
 
     static const float MAX_MODULE_COUNT_PER_EDGE;
     static const float MIN_MODULE_COUNT_PER_EDGE;
@@ -5048,7 +5048,7 @@ class MultiFinderPatternFinder : zxing::qrcode::FinderPatternFinder {
   public:
     MultiFinderPatternFinder(Ref<BitMatrix> image, Ref<ResultPointCallback> resultPointCallback);
     virtual ~MultiFinderPatternFinder();
-    virtual std::vector<Ref<zxing::qrcode::FinderPatternInfo> > findMulti(DecodeHints const& hints);
+    virtual std::vector<Ref<zxing1::qrcode::FinderPatternInfo> > findMulti(DecodeHints const& hints);
 
 
 };
