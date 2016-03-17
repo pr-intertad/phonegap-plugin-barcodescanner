@@ -52,7 +52,7 @@ public class BarcodeScanner extends CordovaPlugin {
     private static final String PARAM_WIDTH = "width";
     private static final String PARAM_FORMAT = "format";
 
-    private static final String LOG_TAG = "BarcodeScanner";
+    private static final String LOG_TAG = "VinScanner";
 
     private CallbackContext callbackContext;
 
