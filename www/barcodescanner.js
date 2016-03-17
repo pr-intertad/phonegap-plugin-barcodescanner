@@ -15,7 +15,7 @@
          *
          * @returns {BarcodeScanner}
          */
-        function BarcodeScannerVin() {
+        function VinScanner() {
 
             /**
              * Encoding constants.
@@ -70,7 +70,7 @@
          *    }
          * @param {Function} errorCallback
          */
-        BarcodeScannerVin.prototype.scan = function (successCallback, errorCallback, config) {
+        VinScanner.prototype.scan = function (successCallback, errorCallback, config) {
 
             if(config instanceof Array) {
                 // do nothing
@@ -108,11 +108,11 @@
                 successCallback(result);
             };
 
-            exec(vinChecker, errorCallback, 'BarcodeScanner', 'scan', config);
+            exec(vinChecker, errorCallback, 'VinScanner', 'scan', config);
         };
 
         //-------------------------------------------------------------------
-        BarcodeScannerVin.prototype.encode = function (type, data, successCallback, errorCallback, options) {
+        VinScanner.prototype.encode = function (type, data, successCallback, errorCallback, options) {
             if (errorCallback == null) {
                 errorCallback = function () {
                 };
@@ -128,12 +128,12 @@
                 return;
             }
 
-            exec(successCallback, errorCallback, 'BarcodeScannerVin', 'encode', [
+            exec(successCallback, errorCallback, 'VinScanner', 'encode', [
                 {"type": type, "data": data, "options": options}
             ]);
         };
 
-        var vinScanner = new BarcodeScannerVin();
+        var vinScanner = new VinScanner();
         module.exports = vinScanner;
 
     }
