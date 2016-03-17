@@ -6,7 +6,7 @@
  * Copyright (c) 2011, IBM Corporation
  * Copyright (c) 2013, Maciej Nux Jaros
  */
-package com.phonegap.plugins.barcodescanner;
+package com.phonegap.plugins.vinscanner;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
