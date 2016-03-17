@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><plugin xmlns="http://www.phonegap.com/ns/plugins/1.0"
     xmlns:android="http://schemas.android.com/apk/res/android"
     id="com.itad.phonegap.plugins.barcodescanner"
-    version="0.0.29">
+    version="0.0.30">
 
     <name>VinScanner</name>
     <description>You can use the BarcodeScanner plugin to scan different types of barcodes (using the device's camera) and get the metadata encoded in them for processing within your application.</description>
@@ -100,7 +100,7 @@
             <uses-feature android:name="android.hardware.camera" android:required="false" />
         </config-file>
 
-        <source-file src="src/android/com.google.zxing.client.android.captureactivity.jar" target-dir="libs"/>
+        <!--<source-file src="src/android/com.google.zxing.client.android.captureactivity.jar" target-dir="libs"/>!-->
 
         <!--
             LibraryProject/res/*.*
