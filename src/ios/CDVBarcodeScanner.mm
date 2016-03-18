@@ -463,7 +463,7 @@ parentViewController:(UIViewController*)parentViewController
     output.alwaysDiscardsLateVideoFrames = YES;
     output.videoSettings = videoOutputSettings;
     
-    [output setSampleBufferDelegate:self queue:dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW, 0)];
+    [output setSampleBufferDelegate:self queue:dispatch_get_main_queue()];
     
     if (![captureSession canSetSessionPreset:AVCaptureSessionPresetHigh]) {
         return @"unable to preset high quality video capture";
