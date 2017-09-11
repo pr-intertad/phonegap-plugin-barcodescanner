@@ -1020,14 +1020,14 @@ parentViewController:(UIViewController*)parentViewController
     return YES;
 }
 
-- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
-{
-    return UIInterfaceOrientationLandscapeRight;
-}
+//- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+// {
+//     return UIInterfaceOrientationLandscapeRight;
+// }
 
 - (NSUInteger)supportedInterfaceOrientations
 {
-    return UIInterfaceOrientationMaskLandscapeRight;
+    return UIInterfaceOrientationMaskLandscape;
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation
